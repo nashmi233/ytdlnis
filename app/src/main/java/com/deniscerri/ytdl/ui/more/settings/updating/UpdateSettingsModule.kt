@@ -32,7 +32,23 @@ object UpdateSettingsModule : SettingModule {
         val ytdlpViewModel = ViewModelProvider(host.hostViewModelStoreOwner)[YTDLPViewModel::class.java]
         val settingsViewModel = ViewModelProvider(host.hostViewModelStoreOwner)[SettingsViewModel::class.java]
 
-        val canUpdateApp = BuildConfig.FLAVOR == "github";
+        val canUpdateApp = BuildConfig.FLAVOR == "github"
+        val playEdition = BuildConfig.FLAVOR == "foss"
+
+        // Google Play edition ships executable/runtime updates only through a new
+        // Play release. Hide controls that can fetch/replace yt-dlp or runtime
+        // packages from external sources.
+        if (playEdition && pref.key in setOf(
+                "ytdlp_source_label",
+                "ytdl-version",
+                "update_ytdl",
+                "auto_update_ytdlp",
+                "update_ytdlp_while_downloading",
+                "packages"
+            )) {
+            pref.isVisible = false
+            return
+        }
 
         when(pref.key) {
             "ytdlp_source_label" -> {
@@ -99,7 +115,6 @@ object UpdateSettingsModule : SettingModule {
                         onPreferenceClickListener =
                             Preference.OnPreferenceClickListener {
                                 host.hostLifecycleOwner.lifecycleScope.launch{
-                                    val updateUtil = UpdateUtil(context)
                                     val res = withContext(Dispatchers.IO){
                                         updateUtil.tryGetNewVersion()
                                     }
@@ -122,14 +137,10 @@ object UpdateSettingsModule : SettingModule {
                 }
             }
             "update_app" -> {
-                pref.apply {
-                    isVisible = canUpdateApp
-                }
+                pref.isVisible = canUpdateApp
             }
             "update_beta" -> {
-                pref.apply {
-                    isVisible = canUpdateApp
-                }
+                pref.isVisible = canUpdateApp
             }
         }
     }
@@ -201,9 +212,7 @@ object UpdateSettingsModule : SettingModule {
                         snackBar.show()
                     }
                 }
-                else -> {
-
-                }
+                else -> Unit
             }
         }.onFailure {
             val msg = it.message ?: context.getString(R.string.errored)

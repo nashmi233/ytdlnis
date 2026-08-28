@@ -102,59 +102,19 @@
             app:title="@string/package_name" />
 
         <Preference
-            app:icon="@drawable/ic_discord"
-            app:key="discord"
-            app:summary="https://discord.gg/WW3KYWxAPm"
-            app:title="Discord">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://discord.gg/WW3KYWxAPm" />
-        </Preference>
-
-        <Preference
-            app:icon="@drawable/ic_telegram"
-            app:key="telegram"
-            app:summary="https://t.me/ytdlnis"
-            app:title="Telegram">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://t.me/ytdlnis" />
-        </Preference>
-
-        <Preference
-            app:icon="@drawable/ic_translate"
-            app:key="translate"
-            app:summary="@string/help_translate_summary"
-            app:title="@string/help_translate">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://hosted.weblate.org/projects/ytdlnis/" />
-        </Preference>
-
-        <Preference
-            app:icon="@drawable/baseline_security_24"
-            app:key="security"
-            app:summary="سياسة الخصوصية للمشروع الأصلي"
-            app:title="@string/security">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://github.com/deniscerri/ytdlnis/blob/main/SECURITY.md" />
-        </Preference>
-
-        <Preference
             app:icon="@drawable/ic_license"
             app:key="license"
             app:summary="GNU General Public License v3.0"
             app:title="@string/license">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/deniscerri/ytdlnis/blob/main/LICENSE" />
+                android:data="https://github.com/nashmi233/ytdlnis/blob/main/LICENSE" />
         </Preference>
 
         <Preference
             app:icon="@drawable/ic_code"
             app:key="rreth"
-            app:summary="المشروع المفتوح المصدر"
+            app:summary="الكود المصدري لمشروع حمّل"
             app:allowDividerBelow="true"
             app:title="@string/source_code">
             <intent
