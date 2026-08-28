@@ -1,35 +1,73 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        android:key="appearance"
-        app:icon="@drawable/ic_settings"
-        android:title="@string/general"/>
+    <PreferenceCategory android:title="إعدادات سريعة">
 
-    <Preference
-        android:key="folders"
-        app:icon="@drawable/baseline_folder_24"
-        android:title="@string/directories"/>
+        <SwitchPreferenceCompat
+            android:widgetLayout="@layout/preferece_material_switch"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_clipboard"
+            app:key="auto_detect_clipboard"
+            app:summary="يتعرّف على رابط الفيديو المنسوخ عند فتح التطبيق"
+            app:title="التعرّف على الرابط تلقائيًا" />
 
-    <Preference
-        android:key="downloading"
-        app:icon="@drawable/ic_downloads"
-        android:title="@string/downloads"/>
+        <SwitchPreferenceCompat
+            android:widgetLayout="@layout/preferece_material_switch"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_downloads"
+            app:key="auto_download_copied_link"
+            app:summary="إذا فعّلته يبدأ التعامل مع الرابط المنسوخ مباشرة"
+            app:title="تنزيل الرابط تلقائيًا" />
 
-    <Preference
-        android:key="processing"
-        app:icon="@drawable/baseline_star_half_24"
-        android:title="@string/processing"/>
+        <SwitchPreferenceCompat
+            android:widgetLayout="@layout/preferece_material_switch"
+            app:defaultValue="true"
+            app:icon="@drawable/baseline_save_alt_24"
+            app:key="save_to_gallery"
+            app:summary="أظهر الفيديو والصوت المحمّل أيضًا في الاستوديو أو المعرض"
+            app:title="إظهار التنزيلات في الاستوديو" />
 
-    <Preference
-        android:key="updating"
-        app:icon="@drawable/ic_update"
-        android:title="@string/updating"/>
+        <SwitchPreferenceCompat
+            android:widgetLayout="@layout/preferece_material_switch"
+            app:defaultValue="true"
+            app:icon="@drawable/baseline_share2_24"
+            app:key="ask_tiktok_download_type"
+            app:summary="عند فتح رابط تيك توك اسألني هل أريد فيديو أو صوت أو صورة"
+            app:title="اختيار نوع تنزيل تيك توك" />
 
-    <Preference
-        android:key="advanced"
-        app:icon="@drawable/baseline_settings_suggest_24"
-        android:title="@string/advanced"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="إعدادات إضافية">
+        <Preference
+            android:key="appearance"
+            app:icon="@drawable/ic_settings"
+            android:title="@string/general"/>
+
+        <Preference
+            android:key="folders"
+            app:icon="@drawable/baseline_folder_24"
+            android:title="@string/directories"/>
+
+        <Preference
+            android:key="downloading"
+            app:icon="@drawable/ic_downloads"
+            android:title="@string/downloads"/>
+
+        <Preference
+            android:key="processing"
+            app:icon="@drawable/baseline_star_half_24"
+            android:title="@string/processing"/>
+
+        <Preference
+            android:key="updating"
+            app:icon="@drawable/ic_update"
+            android:title="@string/updating"/>
+
+        <Preference
+            android:key="advanced"
+            app:icon="@drawable/baseline_settings_suggest_24"
+            android:title="@string/advanced"/>
+    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/backup_restore">
         <Preference
@@ -55,7 +93,6 @@
             android:summary=""
             app:key="backup_path"
             app:title="@string/backup_path" />
-
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/about" >
@@ -63,6 +100,7 @@
             app:icon="@drawable/baseline_exit_to_app_24"
             app:key="package_name"
             app:title="@string/package_name" />
+
         <Preference
             app:icon="@drawable/ic_discord"
             app:key="discord"
@@ -96,7 +134,7 @@
         <Preference
             app:icon="@drawable/baseline_security_24"
             app:key="security"
-            app:summary="🔐 YTDLnis - Privacy Policy"
+            app:summary="سياسة الخصوصية للمشروع الأصلي"
             app:title="@string/security">
             <intent
                 android:action="android.intent.action.VIEW"
@@ -116,16 +154,13 @@
         <Preference
             app:icon="@drawable/ic_code"
             app:key="rreth"
-            app:summary="https://github.com/deniscerri/ytdlnis"
+            app:summary="المشروع المفتوح المصدر"
             app:allowDividerBelow="true"
             app:title="@string/source_code">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/deniscerri/ytdlnis" />
+                android:data="https://github.com/nashmi233/ytdlnis" />
         </Preference>
-
-
     </PreferenceCategory>
-
 
 </PreferenceScreen>
