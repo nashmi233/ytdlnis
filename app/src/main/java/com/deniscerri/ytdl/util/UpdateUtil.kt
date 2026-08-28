@@ -23,7 +23,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.coroutines.cancellation.CancellationException
 
-
 class UpdateUtil(var context: Context) {
     private val tag = "UpdateUtil"
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -40,6 +39,9 @@ class UpdateUtil(var context: Context) {
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun tryGetNewVersion() : Result<GithubRelease> {
+        if (BuildConfig.FLAVOR == "foss") {
+            return Result.failure(IllegalStateException("تحديث نسخة Google Play يتم من المتجر فقط"))
+        }
         try {
             val skippedVersions = sharedPreferences.getString("skip_updates", "")?.split(",")?.distinct()?.toMutableList() ?: mutableListOf()
             val res = getGithubReleases()
@@ -62,7 +64,6 @@ class UpdateUtil(var context: Context) {
                 val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
                 val incomingStableVerNumber = stableV.tag_name.removePrefix("v").tagNameToVersionNumber()
 
-                //if in beta but latest stable higher
                 if (currentVerNumber < incomingStableVerNumber) {
                     isInLatest = false
                     v = stableV
@@ -73,7 +74,6 @@ class UpdateUtil(var context: Context) {
                 v = res.first { !it.tag_name.contains("beta", true) }
                 val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
 
-                //if current version is beta but wants to downgrade to stable, allow it
                 isInLatest = if (currentVersion.contains("beta", true)) {
                     false
                 }else {
@@ -91,7 +91,8 @@ class UpdateUtil(var context: Context) {
     }
 
     fun getGithubReleases(): List<GithubRelease> {
-        val url = "https://api.github.com/repos/deniscerri/ytdlnis/releases"
+        if (BuildConfig.FLAVOR == "foss") return emptyList()
+        val url = "https://api.github.com/repos/nashmi233/ytdlnis/releases"
         val conn: HttpURLConnection
         var json = listOf<GithubRelease>()
         try {
@@ -122,6 +123,13 @@ class UpdateUtil(var context: Context) {
 
     suspend fun updateYTDL(c: String? = null) : YTDLPUpdateResponse =
         withContext(Dispatchers.IO){
+            if (BuildConfig.FLAVOR == "foss") {
+                return@withContext YTDLPUpdateResponse(
+                    YTDLPUpdateStatus.ERROR,
+                    "تحديث مكونات نسخة Google Play يتم مع تحديث التطبيق من المتجر"
+                )
+            }
+
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             if (updatingYTDL) {
                 YTDLPUpdateResponse(YTDLPUpdateStatus.PROCESSING)
@@ -153,19 +161,20 @@ class UpdateUtil(var context: Context) {
                     else YTDLPUpdateResponse(YTDLPUpdateStatus.DONE, out)
                 }
             }
-
-
     }
 
     @SuppressLint("Range", "UnspecifiedRegisterReceiverFlag")
     suspend fun downloadReleaseApk(release: GithubRelease, onProgress: (Long) -> Unit) : Result<File> {
+        if (BuildConfig.FLAVOR == "foss") {
+            return Result.failure(IllegalStateException("نسخة Google Play لا تثبت تحديثات APK خارج المتجر"))
+        }
+
         return withContext(Dispatchers.IO) {
             try {
                 val releaseVersion = release.assets.firstOrNull { it.name.contains(Build.SUPPORTED_ABIS[0]) && !it.name.contains("foss") }!!
                 File(FileUtil.getDefaultApksPath()).mkdirs()
                 val tempApk = File(FileUtil.getDefaultApksPath(), "${releaseVersion.browser_download_url.split("/").last()}")
 
-                //download
                 val request = Request.Builder()
                     .url(releaseVersion.browser_download_url)
                     .build()
@@ -178,19 +187,14 @@ class UpdateUtil(var context: Context) {
                 val body = response.body
                 val totalBytes = body.contentLength()
                 var bytesDownloaded = 0L
-
                 body.byteStream().use { inputStream ->
                     tempApk.outputStream().use { outputStream ->
-                        val buffer = ByteArray(8192) // 8KB buffer
+                        val buffer = ByteArray(8192)
                         var bytesRead: Int
-
                         while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                             if (!isActive) throw CancellationException("Download cancelled by user")
-
                             outputStream.write(buffer, 0, bytesRead)
                             bytesDownloaded += bytesRead
-
-                            // Calculate percentage
                             val progress = ((bytesDownloaded * 100) / totalBytes)
                             onProgress(progress)
                         }
