@@ -4,8 +4,10 @@ import android.app.Application
 import android.content.Intent
 import android.os.Looper
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.preference.PreferenceManager
@@ -41,8 +43,14 @@ class App : Application(), DefaultLifecycleObserver {
         super<Application>.onCreate()
         instance = this
 
-        val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(this@App)
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ar"))
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this@App)
         setDefaultValues()
+        sharedPreferences.edit {
+            putString("app_language", "ar")
+        }
+
         applicationScope = CoroutineScope(SupervisorJob())
         applicationScope.launch((Dispatchers.IO)) {
             try {
@@ -60,7 +68,7 @@ class App : Application(), DefaultLifecycleObserver {
                 val scheduler = ObserveAlarmScheduler(this@App)
                 db.observeSourcesDao.getAllSources()
                     .filter { it.status == ObserveSourcesRepository.SourceStatus.ACTIVE && !it.hasReachedEnd() }
-                    .forEach { scheduler.schedule(it) }         // idempotent: FLAG_UPDATE_CURRENT updates in place
+                    .forEach { scheduler.schedule(it) }
 
                 delay(300)
                 if (!isForegroundLaunch.isCompleted) {
@@ -80,13 +88,14 @@ class App : Application(), DefaultLifecycleObserver {
         }
         ThemeUtil.init(this)
     }
+
     @Throws(ExecuteException::class)
     private fun initLibraries() {
         RuntimeManager.getInstance().init(this)
     }
 
     private fun setDefaultValues(){
-        val SPL = 1
+        val SPL = 2
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         if (sp.getInt("spl", 0) != SPL) {
             PreferenceManager.setDefaultValues(this, R.xml.root_preferences, true)
@@ -98,7 +107,6 @@ class App : Application(), DefaultLifecycleObserver {
             PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, true)
             sp.edit().putInt("spl", SPL).apply()
         }
-
     }
 
     private fun createNotificationChannels() {
