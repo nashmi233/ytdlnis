@@ -1,11 +1,17 @@
 package com.deniscerri.ytdl
 
+import android.app.Activity
 import android.app.Application
+import android.content.ClipboardManager
 import android.content.Intent
+import android.content.SharedPreferences
+import android.os.Bundle
 import android.os.Looper
+import android.util.Patterns
 import android.widget.Toast
-import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.preference.PreferenceManager
@@ -13,23 +19,28 @@ import com.deniscerri.ytdl.core.RuntimeManager
 import com.deniscerri.ytdl.core.models.ExecuteException
 import com.deniscerri.ytdl.database.DBManager
 import com.deniscerri.ytdl.database.repository.ObserveSourcesRepository
-import com.deniscerri.ytdl.services.BgUtilsPoTokenGeneratorService
+import com.deniscerri.ytdl.receiver.ShareActivity
 import com.deniscerri.ytdl.util.BgUtilsPoTokenGeneratorUtil
+import com.deniscerri.ytdl.util.Extensions.extractURL
 import com.deniscerri.ytdl.util.Extensions.hasReachedEnd
+import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ObserveAlarmScheduler
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 
 class App : Application(), DefaultLifecycleObserver {
 
     val isForegroundLaunch = CompletableDeferred<Boolean>()
+    private var storagePreferenceListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     override fun onStart(owner: LifecycleOwner) {
         if (!isForegroundLaunch.isCompleted) {
@@ -41,10 +52,19 @@ class App : Application(), DefaultLifecycleObserver {
         super<Application>.onCreate()
         instance = this
 
-        val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(this@App)
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ar"))
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this@App)
         setDefaultValues()
+        sharedPreferences.edit {
+            putString("app_language", "ar")
+        }
+        configureStorageMode(sharedPreferences, sharedPreferences.getBoolean("save_to_gallery", true))
+        registerStorageModeListener(sharedPreferences)
+        registerClipboardLinkHandler()
+
         applicationScope = CoroutineScope(SupervisorJob())
-        applicationScope.launch((Dispatchers.IO)) {
+        applicationScope.launch(Dispatchers.IO) {
             try {
                 createNotificationChannels()
                 initLibraries()
@@ -60,7 +80,7 @@ class App : Application(), DefaultLifecycleObserver {
                 val scheduler = ObserveAlarmScheduler(this@App)
                 db.observeSourcesDao.getAllSources()
                     .filter { it.status == ObserveSourcesRepository.SourceStatus.ACTIVE && !it.hasReachedEnd() }
-                    .forEach { scheduler.schedule(it) }         // idempotent: FLAG_UPDATE_CURRENT updates in place
+                    .forEach { scheduler.schedule(it) }
 
                 delay(300)
                 if (!isForegroundLaunch.isCompleted) {
@@ -80,13 +100,156 @@ class App : Application(), DefaultLifecycleObserver {
         }
         ThemeUtil.init(this)
     }
+
+    private fun registerStorageModeListener(sharedPreferences: SharedPreferences) {
+        storagePreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { preferences, key ->
+            if (key == "save_to_gallery") {
+                configureStorageMode(preferences, preferences.getBoolean("save_to_gallery", true))
+            }
+        }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(storagePreferenceListener)
+    }
+
+    private fun configureStorageMode(sharedPreferences: SharedPreferences, showInGallery: Boolean) {
+        if (!showInGallery) {
+            val currentMusic = sharedPreferences.getString("music_path", "").orEmpty()
+            val currentVideo = sharedPreferences.getString("video_path", "").orEmpty()
+            val currentCommand = sharedPreferences.getString("command_path", "").orEmpty()
+
+            val privateRoot = getExternalFilesDir(null) ?: filesDir
+            val privateAudio = File(privateRoot, "Hammel/Audio").apply { mkdirs() }.absolutePath
+            val privateVideo = File(privateRoot, "Hammel/Video").apply { mkdirs() }.absolutePath
+            val privateOther = File(privateRoot, "Hammel/Other").apply { mkdirs() }.absolutePath
+
+            sharedPreferences.edit {
+                if (!isPrivateAppPath(currentMusic)) {
+                    putString("gallery_music_path_backup", currentMusic)
+                }
+                if (!isPrivateAppPath(currentVideo)) {
+                    putString("gallery_video_path_backup", currentVideo)
+                }
+                if (!isPrivateAppPath(currentCommand)) {
+                    putString("gallery_command_path_backup", currentCommand)
+                }
+                putString("music_path", privateAudio)
+                putString("video_path", privateVideo)
+                putString("command_path", privateOther)
+            }
+        } else {
+            val currentMusic = sharedPreferences.getString("music_path", "").orEmpty()
+            val currentVideo = sharedPreferences.getString("video_path", "").orEmpty()
+            val currentCommand = sharedPreferences.getString("command_path", "").orEmpty()
+
+            sharedPreferences.edit {
+                if (isPrivateAppPath(currentMusic)) {
+                    putString(
+                        "music_path",
+                        sharedPreferences.getString("gallery_music_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultAudioPath() }
+                    )
+                }
+                if (isPrivateAppPath(currentVideo)) {
+                    putString(
+                        "video_path",
+                        sharedPreferences.getString("gallery_video_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultVideoPath() }
+                    )
+                }
+                if (isPrivateAppPath(currentCommand)) {
+                    putString(
+                        "command_path",
+                        sharedPreferences.getString("gallery_command_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultCommandPath() }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun isPrivateAppPath(path: String): Boolean {
+        if (path.isBlank()) return false
+        val externalRoot = getExternalFilesDir(null)?.absolutePath.orEmpty()
+        return path.startsWith(filesDir.absolutePath) ||
+            (externalRoot.isNotBlank() && path.startsWith(externalRoot))
+    }
+
+    private fun registerClipboardLinkHandler() {
+        registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+
+            override fun onActivityResumed(activity: Activity) {
+                if (activity !is MainActivity) return
+
+                val preferences = PreferenceManager.getDefaultSharedPreferences(activity)
+                val detectLink = preferences.getBoolean("auto_detect_clipboard", true)
+                if (!detectLink) return
+
+                val autoDownload = preferences.getBoolean("auto_download_copied_link", false)
+                val clipboard = activity.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+                val rawText = clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.coerceToText(activity)
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+
+                if (rawText.isBlank()) return
+                val url = runCatching { rawText.extractURL() }.getOrDefault("").trim()
+
+                if (url.isBlank() || !Patterns.WEB_URL.matcher(url).matches()) {
+                    preferences.edit { remove("last_auto_clipboard_url") }
+                    return
+                }
+
+                val lastUrl = preferences.getString("last_auto_clipboard_url", "").orEmpty()
+                if (lastUrl == url) return
+
+                preferences.edit { putString("last_auto_clipboard_url", url) }
+
+                if (autoDownload) {
+                    openCopiedUrl(activity, url, true)
+                } else {
+                    showClipboardDownloadPrompt(activity, url)
+                }
+            }
+        })
+    }
+
+    private fun showClipboardDownloadPrompt(activity: Activity, url: String) {
+        if (activity.isFinishing || activity.isDestroyed) return
+
+        MaterialAlertDialogBuilder(activity)
+            .setTitle("تم العثور على رابط")
+            .setMessage("هل تريد بدء تحميل الرابط المنسوخ؟")
+            .setPositiveButton("بدء التحميل") { _, _ ->
+                openCopiedUrl(activity, url, false)
+            }
+            .setNegativeButton("إلغاء", null)
+            .show()
+    }
+
+    private fun openCopiedUrl(activity: Activity, url: String, background: Boolean) {
+        val shareIntent = Intent(activity, ShareActivity::class.java).apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, url)
+            putExtra("BACKGROUND", background)
+        }
+        activity.startActivity(shareIntent)
+    }
+
     @Throws(ExecuteException::class)
     private fun initLibraries() {
         RuntimeManager.getInstance().init(this)
     }
 
     private fun setDefaultValues(){
-        val SPL = 1
+        val SPL = 2
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         if (sp.getInt("spl", 0) != SPL) {
             PreferenceManager.setDefaultValues(this, R.xml.root_preferences, true)
@@ -98,7 +261,6 @@ class App : Application(), DefaultLifecycleObserver {
             PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, true)
             sp.edit().putInt("spl", SPL).apply()
         }
-
     }
 
     private fun createNotificationChannels() {
