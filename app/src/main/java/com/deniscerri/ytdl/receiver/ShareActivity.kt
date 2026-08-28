@@ -40,6 +40,7 @@ import com.deniscerri.ytdl.ui.BaseActivity
 import com.deniscerri.ytdl.util.Extensions.extractURL
 import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -216,25 +217,37 @@ class ShareActivity : BaseActivity() {
     }
 
     private fun showTikTokDownloadChoices(result: ResultItem, inputQuery: String) {
-        MaterialAlertDialogBuilder(this)
+        val chooserView = layoutInflater.inflate(R.layout.dialog_tiktok_download_choices, null)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("ماذا تريد تحميله؟")
             .setMessage("اختر نوع التنزيل من تيك توك")
-            .setItems(arrayOf("فيديو كامل", "صوت فقط", "صورة الغلاف")) { _, which ->
-                when (which) {
-                    0 -> lifecycleScope.launch {
-                        continueDownload(result, inputQuery, DownloadType.video, false)
-                    }
-                    1 -> lifecycleScope.launch {
-                        continueDownload(result, inputQuery, DownloadType.audio, false)
-                    }
-                    2 -> lifecycleScope.launch {
-                        downloadTikTokCover(result, inputQuery)
-                    }
-                }
-            }
+            .setView(chooserView)
             .setNegativeButton("إلغاء") { _, _ -> finish() }
             .setOnCancelListener { finish() }
-            .show()
+            .create()
+
+        chooserView.findViewById<MaterialButton>(R.id.tiktok_video_button).setOnClickListener {
+            dialog.dismiss()
+            lifecycleScope.launch {
+                continueDownload(result, inputQuery, DownloadType.video, false)
+            }
+        }
+
+        chooserView.findViewById<MaterialButton>(R.id.tiktok_audio_button).setOnClickListener {
+            dialog.dismiss()
+            lifecycleScope.launch {
+                continueDownload(result, inputQuery, DownloadType.audio, false)
+            }
+        }
+
+        chooserView.findViewById<MaterialButton>(R.id.tiktok_image_button).setOnClickListener {
+            dialog.dismiss()
+            lifecycleScope.launch {
+                downloadTikTokCover(result, inputQuery)
+            }
+        }
+
+        dialog.show()
     }
 
     private suspend fun continueDownload(
