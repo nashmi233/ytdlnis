@@ -34,6 +34,12 @@ jobs:
           : > keystore.properties
           chmod +x gradlew
 
+      - name: Run unit tests
+        run: ./gradlew testGithubDebugUnitTest --warning-mode all
+
+      - name: Run Android lint
+        run: ./gradlew lintGithubDebug --warning-mode all
+
       - name: Build Hammel test APK
         run: ./gradlew assembleGithubDebug --warning-mode all
 
