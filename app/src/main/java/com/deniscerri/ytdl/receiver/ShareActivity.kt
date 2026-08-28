@@ -11,6 +11,7 @@ import android.graphics.PixelFormat
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
@@ -37,13 +38,18 @@ import com.deniscerri.ytdl.database.viewmodel.HistoryViewModel
 import com.deniscerri.ytdl.database.viewmodel.ResultViewModel
 import com.deniscerri.ytdl.ui.BaseActivity
 import com.deniscerri.ytdl.util.Extensions.extractURL
+import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
 import kotlin.properties.Delegates
 
 
@@ -87,16 +93,6 @@ class ShareActivity : BaseActivity() {
             myView = inflater.inflate(R.layout.activity_share, null)
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             wm.addView(myView, params)
-
-            // window.addFlags(
-            //     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            //             or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-            //             or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-            // )
-            //
-            // val params = window.attributes
-            // params.alpha = 0f
-            // window.attributes = params
             setContentView(R.layout.activity_share)
 
         }else{
@@ -125,9 +121,9 @@ class ShareActivity : BaseActivity() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         cookieViewModel.updateCookiesFile()
-        val intent = intent
         handleIntents(intent)
     }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntents(intent)
@@ -168,7 +164,12 @@ class ShareActivity : BaseActivity() {
 
             runCatching { supportFragmentManager.popBackStack() }
 
-            quickDownload = intent.getBooleanExtra("quick_download", sharedPreferences.getBoolean("quick_download", false) || sharedPreferences.getString("preferred_download_type", "video") == "command")
+            quickDownload = intent.getBooleanExtra(
+                "quick_download",
+                sharedPreferences.getBoolean("quick_download", false) ||
+                    sharedPreferences.getString("preferred_download_type", "video") == "command"
+            )
+
             val data = when(action){
                 Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_TEXT)!!
                 else -> intent.dataString!!
@@ -178,44 +179,179 @@ class ShareActivity : BaseActivity() {
             val ai = packageManager.getActivityInfo(componentName, PackageManager.GET_META_DATA)
 
             val type = intent.getStringExtra("TYPE")
-            val background = intent.getBooleanExtra("BACKGROUND", ai.metaData?.getBoolean("quick_run_background", false) == true)
+            val background = intent.getBooleanExtra(
+                "BACKGROUND",
+                ai.metaData?.getBoolean("quick_run_background", false) == true
+            )
 
             lifecycleScope.launch {
-                val result: ResultItem
                 val existingResults = withContext(Dispatchers.IO){
                     resultViewModel.getAllByURL(inputQuery)
                 }
 
-                if (existingResults.isEmpty() || existingResults.size > 1) {
-                    resultViewModel.deleteAll()
-                    result = downloadViewModel.createEmptyResultItem(inputQuery)
-                }else{
-                    result = existingResults.first()
+                val result = if (existingResults.size == 1) {
+                    existingResults.first()
+                } else {
+                    if (existingResults.size > 1) resultViewModel.deleteAll()
+                    downloadViewModel.createEmptyResultItem(inputQuery)
                 }
 
-                val downloadType = DownloadType.valueOf(type ?: downloadViewModel.getDownloadType(url = result.url).toString())
-                if (sharedPreferences.getBoolean("download_card", true) && !background){
+                val isTikTok = inputQuery.contains("tiktok.com", ignoreCase = true)
+                val shouldAskTikTok = isTikTok &&
+                    type == null &&
+                    !background &&
+                    sharedPreferences.getBoolean("ask_tiktok_download_type", true)
 
-                    downloadCardViewModel.setResultItem(result)
-                    downloadCardViewModel.setDownloadItem(null)
-                    val bundle = Bundle()
-                    bundle.putSerializable("type", downloadType)
-                    navController.setGraph(R.navigation.share_nav_graph, bundle)
-                }else{
-                    Toast.makeText(this@ShareActivity, "${getString(R.string.downloading)} $inputQuery", Toast.LENGTH_SHORT).show()
-
-                    lifecycleScope.launch(Dispatchers.IO){
-                        val downloadItem = downloadViewModel.createDownloadItemFromResult(
-                            result = result,
-                            givenType = downloadType)
-
-                        downloadViewModel.queueDownloads(listOf(downloadItem))
-                    }
-                    this@ShareActivity.finish()
+                if (shouldAskTikTok) {
+                    showTikTokDownloadChoices(result, inputQuery)
+                    return@launch
                 }
+
+                val downloadType = DownloadType.valueOf(
+                    type ?: downloadViewModel.getDownloadType(url = result.url).toString()
+                )
+                continueDownload(result, inputQuery, downloadType, background)
             }
         }
     }
+
+    private fun showTikTokDownloadChoices(result: ResultItem, inputQuery: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("ماذا تريد تحميله؟")
+            .setMessage("اختر نوع التنزيل من تيك توك")
+            .setItems(arrayOf("فيديو كامل", "صوت فقط", "صورة الغلاف")) { _, which ->
+                when (which) {
+                    0 -> lifecycleScope.launch {
+                        continueDownload(result, inputQuery, DownloadType.video, false)
+                    }
+                    1 -> lifecycleScope.launch {
+                        continueDownload(result, inputQuery, DownloadType.audio, false)
+                    }
+                    2 -> lifecycleScope.launch {
+                        downloadTikTokCover(result, inputQuery)
+                    }
+                }
+            }
+            .setNegativeButton("إلغاء") { _, _ -> finish() }
+            .setOnCancelListener { finish() }
+            .show()
+    }
+
+    private suspend fun continueDownload(
+        result: ResultItem,
+        inputQuery: String,
+        downloadType: DownloadType,
+        background: Boolean
+    ) {
+        if (sharedPreferences.getBoolean("download_card", true) && !background){
+            downloadCardViewModel.setResultItem(result)
+            downloadCardViewModel.setDownloadItem(null)
+            val bundle = Bundle()
+            bundle.putSerializable("type", downloadType)
+            navController.setGraph(R.navigation.share_nav_graph, bundle)
+        }else{
+            Toast.makeText(
+                this@ShareActivity,
+                "جارٍ تجهيز التنزيل",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            withContext(Dispatchers.IO){
+                val downloadItem = downloadViewModel.createDownloadItemFromResult(
+                    result = result,
+                    givenType = downloadType
+                )
+                downloadViewModel.queueDownloads(listOf(downloadItem))
+            }
+            this@ShareActivity.finish()
+        }
+    }
+
+    private suspend fun downloadTikTokCover(initialResult: ResultItem, inputQuery: String) {
+        try {
+            val result = if (initialResult.thumb.isBlank()) {
+                withContext(Dispatchers.IO) {
+                    resultViewModel.repository
+                        .getResultsFromSource(inputQuery, true)
+                        .filterNotNull()
+                        .firstOrNull()
+                } ?: initialResult
+            } else {
+                initialResult
+            }
+
+            if (result.thumb.isBlank()) {
+                Toast.makeText(
+                    this@ShareActivity,
+                    "لم أجد صورة لهذا الرابط",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
+
+            val savedFile = withContext(Dispatchers.IO) {
+                val client = OkHttpClient()
+                val request = Request.Builder().url(result.thumb).build()
+
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw IllegalStateException("تعذر تحميل الصورة")
+                    }
+
+                    val body = response.body
+                    val subtype = body.contentType()?.subtype?.lowercase().orEmpty()
+                    val extension = when {
+                        subtype.contains("png") -> "png"
+                        subtype.contains("webp") -> "webp"
+                        else -> "jpg"
+                    }
+
+                    val showInGallery = sharedPreferences.getBoolean("save_to_gallery", true)
+                    val directory = if (showInGallery) {
+                        File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                            "Hammel/Images"
+                        )
+                    } else {
+                        File(
+                            getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: filesDir,
+                            "Images"
+                        )
+                    }
+                    directory.mkdirs()
+
+                    val baseName = result.title
+                        .ifBlank { "TikTok_${System.currentTimeMillis()}" }
+                        .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+                        .take(80)
+
+                    val file = File(directory, "$baseName.$extension")
+                    file.outputStream().use { output ->
+                        output.write(body.bytes())
+                    }
+                    file
+                }
+            }
+
+            if (sharedPreferences.getBoolean("save_to_gallery", true)) {
+                FileUtil.scanMedia(listOf(savedFile.absolutePath), this@ShareActivity)
+            }
+
+            Toast.makeText(
+                this@ShareActivity,
+                "تم حفظ الصورة",
+                Toast.LENGTH_SHORT
+            ).show()
+            finish()
+        } catch (e: Exception) {
+            Toast.makeText(
+                this@ShareActivity,
+                e.message ?: "تعذر تحميل الصورة",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         startActivity(Intent(this, MainActivity::class.java))
         super.onConfigurationChanged(newConfig)
@@ -236,10 +372,10 @@ class ShareActivity : BaseActivity() {
         super.onResume()
         window.decorView.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         )
     }
 }
