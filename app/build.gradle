@@ -9,6 +9,18 @@ plugins {
 }
 
 def properties = new Properties()
+def signingPropertiesFile = rootProject.file("keystore.properties")
+def hasReleaseSigning = false
+if (signingPropertiesFile.exists() && signingPropertiesFile.text.trim()) {
+    properties.load(new FileInputStream(signingPropertiesFile))
+    hasReleaseSigning = [
+        "signingConfig.storeFile",
+        "signingConfig.storePassword",
+        "signingConfig.keyAlias",
+        "signingConfig.keyPassword"
+    ].every { properties[it] != null && properties[it].toString().trim() }
+}
+
 def versionMajor = 1
 def versionMinor = 8
 def versionPatch = 9
@@ -28,22 +40,17 @@ android {
     namespace 'com.deniscerri.ytdl'
     compileSdk = 36
 
-    try {
-        def propertiesFile = rootProject.file("keystore.properties")
-        if(propertiesFile.text != ""){
-            properties.load(new FileInputStream(propertiesFile))
-
-            properties.load(new FileInputStream(propertiesFile))
-            signingConfigs {
-                debug {
-                    storeFile file(properties["signingConfig.storeFile"])
-                    storePassword properties["signingConfig.storePassword"]
-                    keyAlias properties["signingConfig.keyAlias"]
-                    keyPassword properties["signingConfig.keyPassword"]
-                }
+    if (hasReleaseSigning) {
+        signingConfigs {
+            release {
+                storeFile file(properties["signingConfig.storeFile"])
+                storePassword properties["signingConfig.storePassword"]
+                keyAlias properties["signingConfig.keyAlias"]
+                keyPassword properties["signingConfig.keyPassword"]
             }
         }
-    }catch(IOException ignored){}
+    }
+
     defaultConfig {
         applicationId "com.nashmi233.downloader"
         minSdk 24
@@ -74,14 +81,15 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             debuggable false
-            signingConfig signingConfigs.debug
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
 
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable true
-            signingConfig signingConfigs.debug
         }
     }
 
@@ -108,13 +116,6 @@ android {
             } else {
                 output.versionCodeOverride = 100 * project.android.defaultConfig.versionCode
             }
-
-            def abi = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
-            if (variant.flavorName == "github") {
-                output.outputFileName = "NashmiDownloader-${versionName}-${abi}-${variant.buildType.name}.apk"
-            } else {
-                output.outputFileName = "NashmiDownloader-${versionName}-foss-${abi}-${variant.buildType.name}.apk"
-            }
         }
     }
 
@@ -134,120 +135,87 @@ android {
         jvmTarget = '17'
     }
 
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
     splits {
         abi {
             enable true
             reset()
-            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             universalApk true
         }
     }
+
     composeOptions {
-        kotlinCompilerExtensionVersion "1.10.1"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
 
-    dependenciesInfo {
-        includeInApk = false
-        includeInBundle = false
-    }
     packagingOptions {
         jniLibs {
             useLegacyPackaging true
         }
     }
-    lint {
-        disable 'MissingTranslation', 'RestrictedApi'
-    }
 }
-
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs_nio:2.1.5"
+    implementation project(':common')
+    implementation project(':library')
+    implementation project(':ffmpeg')
 
-    githubImplementation "io.github.junkfood02.youtubedl-android:library:0.18.1"
-    githubImplementation "io.github.junkfood02.youtubedl-android:aria2c:0.18.1"
-    githubImplementation "io.github.junkfood02.youtubedl-android:ffmpeg:0.17.2"
-
-    fossImplementation "io.github.junkfood02.youtubedl-android:library:0.18.1"
-    fossImplementation "io.github.junkfood02.youtubedl-android:aria2c:0.18.1"
-    fossImplementation "io.github.junkfood02.youtubedl-android:ffmpeg:0.17.2"
-
-    izzyImplementation "io.github.junkfood02.youtubedl-android:library:0.18.1"
-    izzyImplementation "io.github.junkfood02.youtubedl-android:aria2c:0.18.1"
-    izzyImplementation "io.github.junkfood02.youtubedl-android:ffmpeg:0.17.2"
-
-    implementation "androidx.appcompat:appcompat:1.7.1"
-    implementation "androidx.constraintlayout:constraintlayout:2.2.1"
-    implementation 'com.google.android.material:material:1.10.0'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation 'androidx.preference:preference-ktx:1.2.1'
-    implementation "androidx.navigation:navigation-fragment-ktx:2.9.6"
-    implementation "androidx.navigation:navigation-ui-ktx:2.9.6"
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.test.ext:junit-ktx:1.3.0'
-    implementation 'androidx.compose.ui:ui-android:1.10.1'
-    implementation 'androidx.preference:preference-ktx:1.2.1'
-    testImplementation "junit:junit:4.13.2"
-    androidTestImplementation "junit:junit:4.13.2"
-    androidTestImplementation "androidx.test.ext:junit:1.3.0"
-    androidTestImplementation "androidx.test.espresso:espresso-core:3.7.0"
-
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'com.devbrackets.android:exomedia:5.2.0'
-
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.squareup.picasso:picasso:2.71828")
-    implementation("jp.wasabeef:picasso-transformations:2.4.0")
-    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0"
-
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.3.0'
-    implementation 'com.facebook.shimmer:shimmer:0.5.0'
-
-    implementation "androidx.work:work-runtime-ktx:2.11.0"
-
-    implementation "androidx.room:room-runtime:2.8.4"
-    implementation "androidx.room:room-ktx:2.8.4"
-    ksp "androidx.room:room-compiler:2.8.4"
-    implementation 'androidx.paging:paging-runtime-ktx:3.3.6'
-    implementation "androidx.room:room-paging:2.8.4"
-    androidTestImplementation "androidx.room:room-testing:2.8.4"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
-    implementation "androidx.compose.runtime:runtime:1.10.1"
-    androidTestImplementation 'com.google.truth:truth:1.4.5'
-
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
-
-    implementation 'com.google.code.gson:gson:2.13.2'
-    implementation "com.squareup.okhttp3:okhttp:5.3.2"
-
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
-    implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
-    implementation "com.neoutils.highlight:highlight-view:2.3.0"
-
-    implementation("androidx.media3:media3-exoplayer:1.9.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.9.0")
-    implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
-    implementation("androidx.media3:media3-ui:1.9.0")
-    implementation("androidx.media3:media3-exoplayer-rtsp:1.9.0")
-
-    implementation "com.anggrayudi:storage:1.5.5"
-    implementation 'me.zhanghai.android.fastscroll:library:1.3.0'
-    implementation 'com.google.accompanist:accompanist-webview:0.36.0'
-    implementation 'androidx.compose.material3:material3-android:1.4.0'
-    implementation "io.noties.markwon:core:4.6.2"
-    implementation("com.github.teamnewpipe:newpipeextractor:v0.26.5")
-
-    implementation("commons-io:commons-io:2.5")
-    implementation("org.apache.commons:commons-compress:1.12")
-    implementation("androidx.core:core-splashscreen:1.2.0")
-
-    implementation 'com.github.termux.termux-app:terminal-view:v0.118.3'
-    implementation 'com.github.termux.termux-app:termux-shared:v0.118.3'
-    //noinspection Aligned16KB
-    implementation 'com.github.termux.termux-app:terminal-emulator:v0.118.3'
-
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.preference.ktx
+    implementation libs.androidx.recyclerview
+    implementation libs.androidx.work.runtime.ktx
+    implementation libs.material
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.livedata.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.process
+    implementation libs.androidx.navigation.fragment.ktx
+    implementation libs.androidx.navigation.ui.ktx
+    implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.ktx
+    ksp libs.androidx.room.compiler
+    implementation libs.kotlinx.coroutines.android
+    implementation libs.kotlinx.serialization.json
+    implementation libs.okhttp
+    implementation libs.gson
+    implementation libs.newpipe.extractor
+    implementation libs.glide
+    ksp libs.glide.compiler
+    implementation libs.colorpicker
+    implementation libs.markdown
+    implementation libs.richpath
+    implementation libs.flexbox
+    implementation libs.preferencex
+    implementation libs.commons.compress
+    implementation libs.commons.io
+    implementation libs.commons.text
+    implementation libs.nanohttpd
+    implementation libs.mpandroidchart
+    implementation libs.touchimageview
+    implementation libs.dotsindicator
+    implementation libs.recyclerview.swipedecorator
+    implementation libs.konfetti.xml
+    implementation libs.konfetti.compose
+    implementation libs.compose.ui
+    implementation libs.compose.material3
+    implementation libs.compose.activity
+    implementation libs.compose.tooling.preview
+    debugImplementation libs.compose.tooling
+    implementation libs.compose.webview
+    implementation libs.compose.viewmodel
+    implementation libs.compose.navigation
+    implementation libs.compose.icon.extended
+    implementation libs.coil.compose
+    coreLibraryDesugaring libs.desugar.jdk.libs
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
 }
