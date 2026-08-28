@@ -38,7 +38,14 @@ object UpdateSettingsModule : SettingModule {
         // Google Play edition ships executable/runtime updates only through a new
         // Play release. Hide controls that can fetch/replace yt-dlp or runtime
         // packages from external sources.
-        if (playEdition && pref.key in setOf("ytdlp_source_label", "ytdl-version", "update_ytdl", "packages")) {
+        if (playEdition && pref.key in setOf(
+                "ytdlp_source_label",
+                "ytdl-version",
+                "update_ytdl",
+                "auto_update_ytdlp",
+                "update_ytdlp_while_downloading",
+                "packages"
+            )) {
             pref.isVisible = false
             return
         }
