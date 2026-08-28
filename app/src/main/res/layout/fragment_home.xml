@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <com.google.android.material.search.SearchView
         android:id="@+id/search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:hint="@string/search_hint"
+        android:hint="الصق رابط الفيديو أو ابحث"
         app:layout_anchor="@id/search_bar">
 
         <LinearLayout
@@ -18,26 +19,25 @@
 
             <HorizontalScrollView
                 android:layout_width="wrap_content"
-                android:scrollbars="none"
-                android:paddingHorizontal="10dp"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:scrollbars="none">
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/providers"
-                    android:layout_marginTop="5dp"
-                    app:singleSelection="true"
-                    app:chipSpacingVertical="-10dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:singleLine="true" />
-
+                    android:layout_marginTop="6dp"
+                    app:chipSpacingVertical="-10dp"
+                    app:singleLine="true"
+                    app:singleSelection="true" />
             </HorizontalScrollView>
 
             <View
                 android:id="@+id/chipGroupDivider"
+                style="@style/Divider.Vertical"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                style="@style/Divider.Vertical"/>
+                android:layout_height="1dp" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/queries_constraint"
@@ -46,14 +46,14 @@
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/queries"
-                    android:layout_margin="10dp"
-                    app:chipSpacingVertical="-10dp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintEnd_toStartOf="@+id/init_search_query"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    app:chipSpacingVertical="-10dp"
+                    app:layout_constraintEnd_toStartOf="@+id/init_search_query"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:singleLine="false" />
 
                 <com.google.android.material.button.MaterialButton
@@ -62,44 +62,41 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
-                    app:iconSize="20dp"
-                    app:cornerRadius="10dp"
+                    android:contentDescription="بدء"
+                    app:cornerRadius="12dp"
                     app:icon="@drawable/ic_search"
+                    app:iconSize="20dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/search_suggestions_recycler"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-
         </LinearLayout>
-
     </com.google.android.material.search.SearchView>
 
     <RelativeLayout
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:layout_width="match_parent"
             android:id="@+id/recyclerViewHome"
-            android:orientation="vertical"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
             android:clipToPadding="false"
+            android:orientation="vertical"
             android:paddingBottom="200dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            />
+            android:scrollbars="none"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
         <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_results_framelayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/recyclerViewHome"
-            android:id="@+id/shimmer_results_framelayout"
             android:orientation="vertical">
 
             <LinearLayout
@@ -109,40 +106,45 @@
                 android:orientation="vertical">
 
                 <include layout="@layout/result_card_shimmer" />
-
                 <include layout="@layout/result_card_shimmer" />
-
                 <include layout="@layout/result_card_shimmer" />
-
                 <include layout="@layout/result_card_shimmer" />
-
                 <include layout="@layout/result_card_shimmer" />
-
-
             </LinearLayout>
-
         </com.facebook.shimmer.ShimmerFrameLayout>
-
     </RelativeLayout>
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/home_appbarlayout"
-        android:background="@null"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@null">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/home_toolbar"
             android:layout_width="match_parent"
-            app:title="@string/app_name"
+            android:layout_height="wrap_content"
             app:layout_scrollFlags="scroll|enterAlways"
-            android:layout_height="wrap_content" />
+            app:title="حمّل" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="8dp"
+            android:text="انسخ رابط الفيديو أو شاركه إلى حمّل ثم اختر الجودة التي تريدها"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_scrollFlags="scroll|enterAlways" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_marginVertical="15dp"
-            app:layout_scrollFlags="scroll|enterAlways"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="12dp"
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <com.facebook.shimmer.ShimmerFrameLayout
                 android:id="@+id/progress"
@@ -159,113 +161,99 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:cardCornerRadius="30dp">
-
-                </com.google.android.material.card.MaterialCardView>
-
-
+                    app:cardCornerRadius="28dp" />
             </com.facebook.shimmer.ShimmerFrameLayout>
-
 
             <com.google.android.material.search.SearchBar
                 android:id="@+id/search_bar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="@string/search_hint"
-                app:menu="@menu/main_menu" >
-
-            </com.google.android.material.search.SearchBar>
-
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="الصق الرابط هنا"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:menu="@menu/main_menu" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <HorizontalScrollView
             android:id="@+id/playlist_selection_chips_scrollview"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:scrollbars="none"
             android:visibility="gone"
-            app:layout_scrollFlags="scroll|enterAlways"
-            android:layout_height="wrap_content">
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:paddingHorizontal="20dp"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp">
 
                 <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
-                    app:selectionRequired="false"
                     android:id="@+id/playlist_selection_chips"
-                    app:singleSelection="true"
-                    android:layout_height="wrap_content">
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:selectionRequired="false"
+                    app:singleSelection="true">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/all"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/all"
-                        android:tag="all"
                         android:checked="true"
+                        android:gravity="center"
                         android:minWidth="30dp"
-                        app:cornerRadius="10dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
+                        android:tag="all"
+                        android:text="الكل"
+                        app:cornerRadius="10dp" />
                 </com.google.android.material.chip.ChipGroup>
-
             </LinearLayout>
-
         </HorizontalScrollView>
-
     </com.google.android.material.appbar.AppBarLayout>
-
 
     <LinearLayout
         android:id="@+id/home_fabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom|end">
-
-            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                android:id="@+id/copied_url_fab"
-                android:visibility="gone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:text="@string/link_you_copied"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginBottom="10dp"
-                android:contentDescription="@string/link_you_copied"
-                app:icon="@drawable/ic_clipboard"
-                app:useCompatPadding="true" />
+        android:layout_gravity="bottom|end"
+        android:orientation="vertical">
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/download_all_fab"
-            android:visibility="gone"
+            android:id="@+id/copied_url_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:layout_marginBottom="10dp"
             android:layout_marginHorizontal="16dp"
-            android:text="@string/download_all"
+            android:layout_marginBottom="10dp"
+            android:contentDescription="استخدام الرابط المنسوخ"
+            android:text="استخدام الرابط المنسوخ"
+            android:visibility="gone"
+            app:icon="@drawable/ic_clipboard"
+            app:useCompatPadding="true" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/download_all_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="10dp"
+            android:text="تحميل الكل"
+            android:visibility="gone"
             app:icon="@drawable/ic_down" />
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
             android:id="@+id/download_selected_fab"
-            android:visibility="gone"
-            app:elevation="0dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
             android:layout_marginBottom="10dp"
+            android:text="تحميل"
+            android:visibility="gone"
+            app:elevation="0dp"
             app:icon="@drawable/ic_down"
-            android:text="@string/download"
-            app:srcCompat="@drawable/ic_music"/>
-
+            app:srcCompat="@drawable/ic_music" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
