@@ -96,7 +96,6 @@ object ThemeUtil {
     fun updateTheme(activity: Activity) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
 
-        //update accent
         when (sharedPreferences.getString("theme_accent","blue")) {
             "Default" -> {
                 DynamicColors.applyToActivityIfAvailable(activity)
@@ -111,25 +110,16 @@ object ThemeUtil {
             "monochrome" -> activity.setTheme(R.style.Theme_Monochrome)
         }
 
-        //high contrast theme
         if (sharedPreferences.getBoolean("high_contrast",false)) {
             activity.theme.applyStyle(R.style.Pure, true)
         }
 
         val theme = sharedPreferences.getString("ytdlnis_theme", "System")!!
         when (theme) {
-            "Light" -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-            "Dark" -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            }
-            // or "System"
-            else -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
+            "Light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
-
 
         val iconMode = sharedPreferences.getString("ytdlnis_icon", "Default")!!
         updateAppIcon(activity,theme, iconMode)
@@ -148,23 +138,17 @@ object ThemeUtil {
 
     }
 
-    /**
-     * Get the styled app name
-     */
     fun getStyledAppName(context: Context): Spanned {
         val colorPrimary = getThemeColor(context, androidx.appcompat.R.attr.colorPrimaryDark)
         val hexColor = "#%06X".format(0xFFFFFF and colorPrimary)
-        return "<span  style='color:$hexColor';>YTDL</span>nis"
+        return "<span style='color:$hexColor'>حمّل</span>"
             .parseAsHtml(HtmlCompat.FROM_HTML_MODE_COMPACT)
     }
 
-
     fun updateAppIcon(activity: Activity, theme: String, appIconMode: String) {
-        //disable old icons
         for (appIcon in availableIcons) {
             val activityClass = "com.deniscerri.ytdl." + appIcon.activityAlias
 
-            // remove old icons
             activity.packageManager.setComponentEnabledSetting(
                 ComponentName(activity.packageName, activityClass),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
@@ -206,9 +190,7 @@ object ThemeUtil {
                     PackageManager.DONT_KILL_APP
                 )
             }
-            // or "System"
             else -> {
-                //set dynamic icon
                 activity.packageManager.setComponentEnabledSetting(
                     ComponentName(activity.packageName, "com.deniscerri.ytdl.Default"),
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
