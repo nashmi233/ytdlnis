@@ -28,7 +28,7 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
-      - name: Prepare build
+      - name: Prepare test build
         run: |
           touch local.properties
           : > keystore.properties
@@ -50,26 +50,17 @@ jobs:
             ${{ env.main_project_module }}/build/reports/lint-results-githubDebug.html
             ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/githubDebug/lintReportGithubDebug/lint-results-githubDebug.txt
 
-      - name: Build Hammel debug APK
+      - name: Build Hammel test APK
         run: ./gradlew assembleGithubDebug --warning-mode all
 
-      - name: Build Hammel unsigned release APK
-        run: ./gradlew assembleGithubRelease --warning-mode all
-
-      - name: Upload universal debug APK
+      - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
           name: Hammel-universal-test-APK
           path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/*universal*.apk
 
-      - name: Upload universal unsigned release APK
+      - name: Upload all APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Hammel-universal-unsigned-release-APK
-          path: ${{ env.main_project_module }}/build/outputs/apk/github/release/*universal*.apk
-
-      - name: Upload all release APKs
-        uses: actions/upload-artifact@v4
-        with:
-          name: Hammel-all-unsigned-release-APKs
-          path: ${{ env.main_project_module }}/build/outputs/apk/github/release/
+          name: Hammel-all-test-APKs
+          path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/
