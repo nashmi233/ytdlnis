@@ -8,16 +8,16 @@
             app:defaultValue="true"
             app:icon="@drawable/ic_clipboard"
             app:key="auto_detect_clipboard"
-            app:summary="يتعرّف على رابط الفيديو المنسوخ عند فتح التطبيق"
-            app:title="التعرّف على الرابط تلقائيًا" />
+            app:summary="عند فتح حمّل أو الرجوع إليه يفحص آخر رابط نسخته ويعرض بدء التحميل أو إلغاء"
+            app:title="التعرّف على الرابط المنسوخ" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="false"
             app:icon="@drawable/ic_downloads"
             app:key="auto_download_copied_link"
-            app:summary="إذا فعّلته يبدأ التعامل مع الرابط المنسوخ مباشرة"
-            app:title="تنزيل الرابط تلقائيًا" />
+            app:summary="إذا فعّلته يبدأ تنزيل الرابط المكتشف مباشرة بدون سؤال"
+            app:title="بدء التنزيل تلقائيًا" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
@@ -32,7 +32,7 @@
             app:defaultValue="true"
             app:icon="@drawable/baseline_share2_24"
             app:key="ask_tiktok_download_type"
-            app:summary="عند فتح رابط تيك توك اسألني هل أريد فيديو أو صوت أو صورة"
+            app:summary="عند فتح رابط تيك توك اسألني هل أريد فيديو أو صوت أو صورة الغلاف"
             app:title="اختيار نوع تنزيل تيك توك" />
 
     </PreferenceCategory>
