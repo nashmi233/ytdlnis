@@ -21,6 +21,13 @@ class UpdateCheckWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
+        // The foss flavor is used as the Google Play edition on the play-release branch.
+        // Play-distributed builds must receive app/runtime executable updates through
+        // Google Play releases instead of downloading replacement packages at runtime.
+        if (BuildConfig.FLAVOR == "foss") {
+            return Result.success()
+        }
+
         val updateUtil = UpdateUtil(App.instance)
         val notificationUtil = NotificationUtil(App.instance)
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
