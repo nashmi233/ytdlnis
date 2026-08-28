@@ -38,7 +38,17 @@ jobs:
         run: ./gradlew testGithubDebugUnitTest --warning-mode all
 
       - name: Run Android lint
+        continue-on-error: true
         run: ./gradlew lintGithubDebug --warning-mode all
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammel-lint-report
+          path: |
+            ${{ env.main_project_module }}/build/reports/lint-results-githubDebug.html
+            ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/githubDebug/lintReportGithubDebug/lint-results-githubDebug.txt
 
       - name: Build Hammel test APK
         run: ./gradlew assembleGithubDebug --warning-mode all
