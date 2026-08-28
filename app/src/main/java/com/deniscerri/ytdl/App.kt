@@ -6,7 +6,6 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.Environment
 import android.os.Looper
 import android.util.Patterns
 import android.widget.Toast
@@ -28,6 +27,7 @@ import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ObserveAlarmScheduler
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -187,9 +187,9 @@ class App : Application(), DefaultLifecycleObserver {
 
                 val preferences = PreferenceManager.getDefaultSharedPreferences(activity)
                 val detectLink = preferences.getBoolean("auto_detect_clipboard", true)
-                val autoDownload = preferences.getBoolean("auto_download_copied_link", false)
-                if (!detectLink && !autoDownload) return
+                if (!detectLink) return
 
+                val autoDownload = preferences.getBoolean("auto_download_copied_link", false)
                 val clipboard = activity.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager ?: return
                 val rawText = clipboard.primaryClip
                     ?.getItemAt(0)
@@ -211,15 +211,36 @@ class App : Application(), DefaultLifecycleObserver {
 
                 preferences.edit { putString("last_auto_clipboard_url", url) }
 
-                val shareIntent = Intent(activity, ShareActivity::class.java).apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, url)
-                    putExtra("BACKGROUND", autoDownload)
+                if (autoDownload) {
+                    openCopiedUrl(activity, url, true)
+                } else {
+                    showClipboardDownloadPrompt(activity, url)
                 }
-                activity.startActivity(shareIntent)
             }
         })
+    }
+
+    private fun showClipboardDownloadPrompt(activity: Activity, url: String) {
+        if (activity.isFinishing || activity.isDestroyed) return
+
+        MaterialAlertDialogBuilder(activity)
+            .setTitle("تم العثور على رابط")
+            .setMessage("هل تريد بدء تحميل الرابط المنسوخ؟")
+            .setPositiveButton("بدء التحميل") { _, _ ->
+                openCopiedUrl(activity, url, false)
+            }
+            .setNegativeButton("إلغاء", null)
+            .show()
+    }
+
+    private fun openCopiedUrl(activity: Activity, url: String, background: Boolean) {
+        val shareIntent = Intent(activity, ShareActivity::class.java).apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, url)
+            putExtra("BACKGROUND", background)
+        }
+        activity.startActivity(shareIntent)
     }
 
     @Throws(ExecuteException::class)
