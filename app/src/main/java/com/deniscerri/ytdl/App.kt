@@ -57,7 +57,7 @@ class App : Application(), DefaultLifecycleObserver {
         registerClipboardLinkHandler()
 
         applicationScope = CoroutineScope(SupervisorJob())
-        applicationScope.launch((Dispatchers.IO)) {
+        applicationScope.launch(Dispatchers.IO) {
             try {
                 createNotificationChannels()
                 initLibraries()
@@ -95,7 +95,7 @@ class App : Application(), DefaultLifecycleObserver {
     }
 
     private fun registerClipboardLinkHandler() {
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+        registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
             override fun onActivityStarted(activity: Activity) = Unit
             override fun onActivityPaused(activity: Activity) = Unit
