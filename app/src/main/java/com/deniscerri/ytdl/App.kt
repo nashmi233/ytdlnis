@@ -1,11 +1,14 @@
 package com.deniscerri.ytdl
 
+import android.app.Activity
 import android.app.Application
+import android.content.ClipboardManager
 import android.content.Intent
+import android.os.Bundle
 import android.os.Looper
+import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -15,8 +18,9 @@ import com.deniscerri.ytdl.core.RuntimeManager
 import com.deniscerri.ytdl.core.models.ExecuteException
 import com.deniscerri.ytdl.database.DBManager
 import com.deniscerri.ytdl.database.repository.ObserveSourcesRepository
-import com.deniscerri.ytdl.services.BgUtilsPoTokenGeneratorService
+import com.deniscerri.ytdl.receiver.ShareActivity
 import com.deniscerri.ytdl.util.BgUtilsPoTokenGeneratorUtil
+import com.deniscerri.ytdl.util.Extensions.extractURL
 import com.deniscerri.ytdl.util.Extensions.hasReachedEnd
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ObserveAlarmScheduler
@@ -50,6 +54,7 @@ class App : Application(), DefaultLifecycleObserver {
         sharedPreferences.edit {
             putString("app_language", "ar")
         }
+        registerClipboardLinkHandler()
 
         applicationScope = CoroutineScope(SupervisorJob())
         applicationScope.launch((Dispatchers.IO)) {
@@ -87,6 +92,55 @@ class App : Application(), DefaultLifecycleObserver {
             }
         }
         ThemeUtil.init(this)
+    }
+
+    private fun registerClipboardLinkHandler() {
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+
+            override fun onActivityResumed(activity: Activity) {
+                if (activity !is MainActivity) return
+
+                val preferences = PreferenceManager.getDefaultSharedPreferences(activity)
+                val detectLink = preferences.getBoolean("auto_detect_clipboard", true)
+                val autoDownload = preferences.getBoolean("auto_download_copied_link", false)
+                if (!detectLink && !autoDownload) return
+
+                val clipboard = activity.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+                val rawText = clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.coerceToText(activity)
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+
+                if (rawText.isBlank()) return
+                val url = runCatching { rawText.extractURL() }.getOrDefault("").trim()
+
+                if (url.isBlank() || !Patterns.WEB_URL.matcher(url).matches()) {
+                    preferences.edit { remove("last_auto_clipboard_url") }
+                    return
+                }
+
+                val lastUrl = preferences.getString("last_auto_clipboard_url", "").orEmpty()
+                if (lastUrl == url) return
+
+                preferences.edit { putString("last_auto_clipboard_url", url) }
+
+                val shareIntent = Intent(activity, ShareActivity::class.java).apply {
+                    action = Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, url)
+                    putExtra("BACKGROUND", autoDownload)
+                }
+                activity.startActivity(shareIntent)
+            }
+        })
     }
 
     @Throws(ExecuteException::class)
