@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - "custom-app"
+  pull_request:
+    branches:
+      - "custom-app"
 
 jobs:
   build:
@@ -35,32 +38,57 @@ jobs:
           chmod +x gradlew
 
       - name: Run unit tests
+        if: github.event_name == 'push'
         run: ./gradlew testGithubDebugUnitTest --warning-mode all
 
+      - name: Run Play edition unit tests
+        if: github.event_name == 'pull_request'
+        run: ./gradlew testFossDebugUnitTest --warning-mode all
+
       - name: Run Android lint
+        if: github.event_name == 'push'
         continue-on-error: true
         run: ./gradlew lintGithubDebug --warning-mode all
+
+      - name: Run Play edition Android lint
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: ./gradlew lintFossDebug --warning-mode all
 
       - name: Upload lint report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Hammel-lint-report
+          name: Hammel-lint-report-${{ github.event_name }}
           path: |
-            ${{ env.main_project_module }}/build/reports/lint-results-githubDebug.html
-            ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/githubDebug/lintReportGithubDebug/lint-results-githubDebug.txt
+            ${{ env.main_project_module }}/build/reports/lint-results-*.html
+            ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/**/lint-results-*.txt
 
       - name: Build Hammel test APK
+        if: github.event_name == 'push'
         run: ./gradlew assembleGithubDebug --warning-mode all
 
+      - name: Build Google Play edition test APK
+        if: github.event_name == 'pull_request'
+        run: ./gradlew assembleFossDebug --warning-mode all
+
       - name: Upload universal APK
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: Hammel-universal-test-APK
           path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/*universal*.apk
 
       - name: Upload all APKs
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: Hammel-all-test-APKs
           path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/
+
+      - name: Upload Google Play edition test APKs
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammel-Play-test-APKs
+          path: ${{ env.main_project_module }}/build/outputs/apk/foss/debug/
