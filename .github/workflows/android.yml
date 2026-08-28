@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - "custom-app"
+      - "play-release"
 
 jobs:
   build:
@@ -35,32 +36,57 @@ jobs:
           chmod +x gradlew
 
       - name: Run unit tests
+        if: github.ref_name == 'custom-app'
         run: ./gradlew testGithubDebugUnitTest --warning-mode all
 
+      - name: Run Play edition unit tests
+        if: github.ref_name == 'play-release'
+        run: ./gradlew testFossDebugUnitTest --warning-mode all
+
       - name: Run Android lint
+        if: github.ref_name == 'custom-app'
         continue-on-error: true
         run: ./gradlew lintGithubDebug --warning-mode all
+
+      - name: Run Play edition Android lint
+        if: github.ref_name == 'play-release'
+        continue-on-error: true
+        run: ./gradlew lintFossDebug --warning-mode all
 
       - name: Upload lint report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Hammel-lint-report
+          name: Hammel-lint-report-${{ github.ref_name }}
           path: |
-            ${{ env.main_project_module }}/build/reports/lint-results-githubDebug.html
-            ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/githubDebug/lintReportGithubDebug/lint-results-githubDebug.txt
+            ${{ env.main_project_module }}/build/reports/lint-results-*.html
+            ${{ env.main_project_module }}/build/intermediates/lint_intermediate_text_report/**/lint-results-*.txt
 
       - name: Build Hammel test APK
+        if: github.ref_name == 'custom-app'
         run: ./gradlew assembleGithubDebug --warning-mode all
 
+      - name: Build Google Play edition test APK
+        if: github.ref_name == 'play-release'
+        run: ./gradlew assembleFossDebug --warning-mode all
+
       - name: Upload universal APK
+        if: github.ref_name == 'custom-app'
         uses: actions/upload-artifact@v4
         with:
           name: Hammel-universal-test-APK
           path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/*universal*.apk
 
       - name: Upload all APKs
+        if: github.ref_name == 'custom-app'
         uses: actions/upload-artifact@v4
         with:
           name: Hammel-all-test-APKs
           path: ${{ env.main_project_module }}/build/outputs/apk/github/debug/
+
+      - name: Upload Google Play edition test APKs
+        if: github.ref_name == 'play-release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammel-Play-test-APKs
+          path: ${{ env.main_project_module }}/build/outputs/apk/foss/debug/
