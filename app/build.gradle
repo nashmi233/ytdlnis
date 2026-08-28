@@ -45,13 +45,13 @@ android {
         }
     }catch(IOException ignored){}
     defaultConfig {
-        applicationId "com.deniscerri.ytdl"
+        applicationId "com.nashmi233.downloader"
         minSdk 24
         targetSdk 36
         versionCode versionMajor * 1000000 + versionMinor * 10000 + versionPatch * 100 + versionBuild
         versionName "${versionMajor}.${versionMinor}.${versionPatch}${versionExt}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        archivesBaseName = "YTDLnis-$versionName"
+        archivesBaseName = "NashmiDownloader-$versionName"
         vectorDrawables {
             useSupportLibrary true
         }
@@ -111,9 +111,9 @@ android {
 
             def abi = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
             if (variant.flavorName == "github") {
-                output.outputFileName = "YTDLnis-${versionName}-${abi}-${variant.buildType.name}.apk"
+                output.outputFileName = "NashmiDownloader-${versionName}-${abi}-${variant.buildType.name}.apk"
             } else {
-                output.outputFileName = "YTDLnis-${versionName}-foss-${abi}-${variant.buildType.name}.apk"
+                output.outputFileName = "NashmiDownloader-${versionName}-foss-${abi}-${variant.buildType.name}.apk"
             }
         }
     }
@@ -147,9 +147,7 @@ android {
     }
 
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
     packagingOptions {
@@ -230,14 +228,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
     implementation "com.neoutils.highlight:highlight-view:2.3.0"
 
-    // For media playback using ExoPlayer
     implementation("androidx.media3:media3-exoplayer:1.9.0")
-    // For DASH playback support with ExoPlayer
     implementation("androidx.media3:media3-exoplayer-dash:1.9.0")
-    // For HLS playback support with ExoPlayer
     implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
     implementation("androidx.media3:media3-ui:1.9.0")
-    // For RTSP playback support with ExoPlayer
     implementation("androidx.media3:media3-exoplayer-rtsp:1.9.0")
 
     implementation "com.anggrayudi:storage:1.5.5"
