@@ -4,7 +4,9 @@ import android.app.Activity
 import android.app.Application
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Environment
 import android.os.Looper
 import android.util.Patterns
 import android.widget.Toast
@@ -22,6 +24,7 @@ import com.deniscerri.ytdl.receiver.ShareActivity
 import com.deniscerri.ytdl.util.BgUtilsPoTokenGeneratorUtil
 import com.deniscerri.ytdl.util.Extensions.extractURL
 import com.deniscerri.ytdl.util.Extensions.hasReachedEnd
+import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ObserveAlarmScheduler
 import com.deniscerri.ytdl.util.ThemeUtil
@@ -31,11 +34,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 
 class App : Application(), DefaultLifecycleObserver {
 
     val isForegroundLaunch = CompletableDeferred<Boolean>()
+    private var storagePreferenceListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     override fun onStart(owner: LifecycleOwner) {
         if (!isForegroundLaunch.isCompleted) {
@@ -54,6 +59,8 @@ class App : Application(), DefaultLifecycleObserver {
         sharedPreferences.edit {
             putString("app_language", "ar")
         }
+        configureStorageMode(sharedPreferences, sharedPreferences.getBoolean("save_to_gallery", true))
+        registerStorageModeListener(sharedPreferences)
         registerClipboardLinkHandler()
 
         applicationScope = CoroutineScope(SupervisorJob())
@@ -92,6 +99,78 @@ class App : Application(), DefaultLifecycleObserver {
             }
         }
         ThemeUtil.init(this)
+    }
+
+    private fun registerStorageModeListener(sharedPreferences: SharedPreferences) {
+        storagePreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { preferences, key ->
+            if (key == "save_to_gallery") {
+                configureStorageMode(preferences, preferences.getBoolean("save_to_gallery", true))
+            }
+        }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(storagePreferenceListener)
+    }
+
+    private fun configureStorageMode(sharedPreferences: SharedPreferences, showInGallery: Boolean) {
+        if (!showInGallery) {
+            val currentMusic = sharedPreferences.getString("music_path", "").orEmpty()
+            val currentVideo = sharedPreferences.getString("video_path", "").orEmpty()
+            val currentCommand = sharedPreferences.getString("command_path", "").orEmpty()
+
+            val privateRoot = getExternalFilesDir(null) ?: filesDir
+            val privateAudio = File(privateRoot, "Hammel/Audio").apply { mkdirs() }.absolutePath
+            val privateVideo = File(privateRoot, "Hammel/Video").apply { mkdirs() }.absolutePath
+            val privateOther = File(privateRoot, "Hammel/Other").apply { mkdirs() }.absolutePath
+
+            sharedPreferences.edit {
+                if (!isPrivateAppPath(currentMusic)) {
+                    putString("gallery_music_path_backup", currentMusic)
+                }
+                if (!isPrivateAppPath(currentVideo)) {
+                    putString("gallery_video_path_backup", currentVideo)
+                }
+                if (!isPrivateAppPath(currentCommand)) {
+                    putString("gallery_command_path_backup", currentCommand)
+                }
+                putString("music_path", privateAudio)
+                putString("video_path", privateVideo)
+                putString("command_path", privateOther)
+            }
+        } else {
+            val currentMusic = sharedPreferences.getString("music_path", "").orEmpty()
+            val currentVideo = sharedPreferences.getString("video_path", "").orEmpty()
+            val currentCommand = sharedPreferences.getString("command_path", "").orEmpty()
+
+            sharedPreferences.edit {
+                if (isPrivateAppPath(currentMusic)) {
+                    putString(
+                        "music_path",
+                        sharedPreferences.getString("gallery_music_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultAudioPath() }
+                    )
+                }
+                if (isPrivateAppPath(currentVideo)) {
+                    putString(
+                        "video_path",
+                        sharedPreferences.getString("gallery_video_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultVideoPath() }
+                    )
+                }
+                if (isPrivateAppPath(currentCommand)) {
+                    putString(
+                        "command_path",
+                        sharedPreferences.getString("gallery_command_path_backup", "").orEmpty()
+                            .ifBlank { FileUtil.getDefaultCommandPath() }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun isPrivateAppPath(path: String): Boolean {
+        if (path.isBlank()) return false
+        val externalRoot = getExternalFilesDir(null)?.absolutePath.orEmpty()
+        return path.startsWith(filesDir.absolutePath) ||
+            (externalRoot.isNotBlank() && path.startsWith(externalRoot))
     }
 
     private fun registerClipboardLinkHandler() {
