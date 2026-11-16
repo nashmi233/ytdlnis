@@ -1,0 +1,49 @@
+name: Verify Hammel interface
+on:
+  push:
+    branches: [hammel-ui-verification]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: nashmi233/ytdlnis
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download the already-built APK
+        run: |
+          gh run download 43952283020 --name Hammel-universal-test-APK --dir release-assets
+          sha256sum release-assets/*.apk
+      - name: Enable KVM for interface verification
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Verify interface and capture real app screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -skin 1080x1920
+          script: |
+            adb install -g release-assets/*universal*.apk
+            adb shell run-as com.nashmi233.downloader mkdir -p shared_prefs
+            printf '%s' '<map><boolean name="asked_auto_update_preferences" value="true"/><boolean name="update_app" value="false"/><boolean name="auto_update_ytdlp" value="false"/></map>' | adb shell run-as com.nashmi233.downloader sh -c '"cat > shared_prefs/com.nashmi233.downloader_preferences.xml"'
+            python3 scripts/capture-screenshots.py
+
+      - name: Upload app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammel-interface-screenshots
+          path: screenshots/
