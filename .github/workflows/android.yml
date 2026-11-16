@@ -40,6 +40,13 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testGithubDebugUnitTest --warning-mode all
 
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammel-unit-test-results
+          path: app/build/test-results/testGithubDebugUnitTest/*.xml
+
       - name: Run Android lint
         continue-on-error: true
         run: ./gradlew lintGithubDebug --warning-mode all

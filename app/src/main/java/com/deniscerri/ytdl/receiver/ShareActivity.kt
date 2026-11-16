@@ -1,6 +1,7 @@
 package com.deniscerri.ytdl.receiver
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -39,6 +40,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -215,6 +217,7 @@ class ShareActivity : BaseActivity() {
         dialog.show()
     }
 
+    @SuppressLint("RestrictedApi")
     private suspend fun continueDownload(
         result: ResultItem,
         inputQuery: String,
@@ -227,6 +230,11 @@ class ShareActivity : BaseActivity() {
             val bundle = Bundle()
             bundle.putSerializable("type", downloadType)
             navController.setGraph(R.navigation.share_nav_graph, bundle)
+            lifecycleScope.launch {
+                navController.currentBackStack.collectLatest { backStack ->
+                    if (backStack.isEmpty()) finish()
+                }
+            }
         }else{
             Toast.makeText(
                 this@ShareActivity,
@@ -343,7 +351,6 @@ class ShareActivity : BaseActivity() {
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        startActivity(Intent(this, MainActivity::class.java))
         super.onConfigurationChanged(newConfig)
     }
 

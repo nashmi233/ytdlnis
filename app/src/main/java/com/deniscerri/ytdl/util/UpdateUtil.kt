@@ -210,8 +210,9 @@ class UpdateUtil(var context: Context) {
                     ?.containsAll(oldSigning.apkContentsSigners.toSet()) == true
             }
         } else {
-            !installed.signatures.isNullOrEmpty() &&
-                installed.signatures.toSet() == archive.signatures?.toSet()
+            val installedSignatures = installed.signatures
+            !installedSignatures.isNullOrEmpty() &&
+                installedSignatures.toSet() == archive.signatures?.toSet()
         }
         require(compatibleSignature) { "توقيع التحديث مختلف عن النسخة المثبتة؛ تعذر تحديثها مع الاحتفاظ بالبيانات" }
     }
