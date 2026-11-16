@@ -1,1 +1,1 @@
-Android Video/Audio Downloader app using yt-dlp
+Download video and audio from links, with direct sharing and Arabic controls.

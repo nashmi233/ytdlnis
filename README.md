@@ -4,7 +4,7 @@
 <p>الفيديو والصوت، من الرابط إلى جهازك.</p>
 <p>تطبيق أندرويد بواجهة عربية لتنزيل الوسائط وإدارة ملفاتك، مع مشاركة مباشرة من التطبيقات الأخرى.</p>
 
-[تنزيل التطبيق](https://github.com/nashmi233/ytdlnis/releases) · [سجل الإصدارات](https://github.com/nashmi233/ytdlnis/releases) · [الإبلاغ عن مشكلة](https://github.com/nashmi233/ytdlnis/issues)
+[تنزيل التطبيق](https://github.com/nashmi233/ytdlnis/releases) · [سجل الإصدارات](https://github.com/nashmi233/ytdlnis/releases) · [المساهمات](https://github.com/nashmi233/ytdlnis/pulls)
 
 ![Android 7+](https://img.shields.io/badge/Android-7.0%2B-87CEFA)
 ![License GPL v3](https://img.shields.io/badge/License-GPL_v3-blue)
@@ -36,7 +36,7 @@
 
 ## التثبيت
 
-افتح [صفحة الإصدارات](https://github.com/nashmi233/ytdlnis/releases) واختر ملف **universal.apk** المناسب لجميع المعماريات، أو ملف APK المتوافق مع جهازك إن توفر. يتطلب التطبيق Android 7.0 أو أحدث. يظهر رقم النسخة داخل الإعدادات.
+افتح [صفحة الإصدارات](https://github.com/nashmi233/ytdlnis/releases) واختر ملف APK الذي يتضمن اسمه **universal** المناسب لجميع المعماريات، أو ملف APK المتوافق مع جهازك إن توفر. يتطلب التطبيق Android 7.0 أو أحدث. يظهر رقم النسخة داخل الإعدادات.
 
 تُبيّن صفحة كل إصدار حالة النسخة وتوقيعها. الإصدارات الموسومة **Pre-release / Debug** نسخ تجريبية. يتطلب التحديث فوق تثبيت سابق توافق توقيع التطبيق؛ احتفظ بنسخة احتياطية من بياناتك قبل تغيير التثبيت.
 
@@ -53,7 +53,7 @@ touch keystore.properties
 ./gradlew testGithubDebugUnitTest lintGithubDebug assembleGithubDebug
 ```
 
-يشغّل GitHub Actions اختبارات الوحدة وفحص Android lint وبناء APK، ثم يتحقق من الواجهة على محاكي أندرويد ويلتقط صورها. إعداد توقيع إصدار توزيع مستقل مسؤولية من يبني النسخة.
+يشغّل GitHub Actions اختبارات الوحدة وفحص Android lint وبناء APK، ثم يتحقق من الواجهة على محاكي أندرويد ويلتقط صورها. راجع [نتائج التحقق وحدوده](docs/VALIDATION-1.8.9.5.md). إعداد توقيع إصدار توزيع مستقل مسؤولية من يبني النسخة.
 
 ## المشروع والترخيص
 
