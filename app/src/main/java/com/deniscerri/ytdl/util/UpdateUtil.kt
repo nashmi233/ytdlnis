@@ -2,8 +2,9 @@ package com.deniscerri.ytdl.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.pm.PackageInfoCompat
 import android.os.Build
-import android.util.Log
 import androidx.preference.PreferenceManager
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
@@ -25,7 +26,6 @@ import kotlin.coroutines.cancellation.CancellationException
 
 
 class UpdateUtil(var context: Context) {
-    private val tag = "UpdateUtil"
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     private val channelMap = mapOf(
@@ -34,81 +34,45 @@ class UpdateUtil(var context: Context) {
         Pair<String, RuntimeManager.UpdateChannel>("master", RuntimeManager.UpdateChannel.MASTER)
     )
 
-    private fun String.tagNameToVersionNumber() : Int {
-        return this.replace("-beta", "").replace(".", "").padEnd(10,'0').toInt()
-    }
-
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    fun tryGetNewVersion() : Result<GithubRelease> {
-        try {
-            val skippedVersions = sharedPreferences.getString("skip_updates", "")?.split(",")?.distinct()?.toMutableList() ?: mutableListOf()
-            val res = getGithubReleases()
-
-            if (res.isEmpty()){
-                return Result.failure(Error(context.getString(R.string.network_error)))
+    fun tryGetNewVersion(): Result<GithubRelease> {
+        return try {
+            val releases = fetchGithubReleases()
+            val skipped = sharedPreferences.getString("skip_updates", "")
+                .orEmpty().split(",").toSet()
+            val release = AppUpdatePolicy.selectRelease(
+                releases, BuildConfig.VERSION_NAME,
+                sharedPreferences.getBoolean("update_beta", false), skipped,
+                Build.SUPPORTED_ABIS.toList(), BuildConfig.FLAVOR, BuildConfig.DEBUG
+            )
+            if (release == null) {
+                NotificationUtil(context).cancelAppUpdate()
+                Result.failure(IllegalStateException(context.getString(R.string.you_are_in_latest_version)))
+            } else {
+                Result.success(release)
             }
-
-            val currentVersion = BuildConfig.VERSION_NAME
-            val currentVerNumber = currentVersion.tagNameToVersionNumber()
-
-            val useBeta = sharedPreferences.getBoolean("update_beta", false)
-            var isInLatest = true
-
-            var v: GithubRelease
-            if (useBeta) {
-                v = res.firstOrNull { it.tag_name.contains("beta", true) } ?: res.first()
-                val stableV = res.first { !it.tag_name.contains("beta", true) }
-
-                val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
-                val incomingStableVerNumber = stableV.tag_name.removePrefix("v").tagNameToVersionNumber()
-
-                //if in beta but latest stable higher
-                if (currentVerNumber < incomingStableVerNumber) {
-                    isInLatest = false
-                    v = stableV
-                }else{
-                    isInLatest = currentVerNumber >= incomingVerNumber
-                }
-            }else {
-                v = res.first { !it.tag_name.contains("beta", true) }
-                val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
-
-                //if current version is beta but wants to downgrade to stable, allow it
-                isInLatest = if (currentVersion.contains("beta", true)) {
-                    false
-                }else {
-                    currentVerNumber >= incomingVerNumber
-                }
-            }
-
-            if (skippedVersions.contains(v.tag_name)) isInLatest = true
-            if (isInLatest) return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
-            return Result.success(v)
-        }catch (e: Exception){
-            e.printStackTrace()
-            return Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    fun getGithubReleases(): List<GithubRelease> {
-        val url = "https://api.github.com/repos/deniscerri/ytdlnis/releases"
-        val conn: HttpURLConnection
-        var json = listOf<GithubRelease>()
+    fun getGithubReleases(): List<GithubRelease> =
+        runCatching { fetchGithubReleases() }.getOrDefault(emptyList())
+
+    private fun fetchGithubReleases(): List<GithubRelease> {
+        val conn = URL(AppUpdatePolicy.RELEASES_API).openConnection() as HttpURLConnection
         try {
-            val req = URL(url)
-            conn = req.openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
             conn.connectTimeout = 10000
             conn.readTimeout = 5000
-            if (conn.responseCode < 300) {
-                val myType = object : TypeToken<List<GithubRelease>>() {}.type
-                json = Gson().fromJson(InputStreamReader(conn.inputStream), myType)
+            check(conn.responseCode in 200..299) { context.getString(R.string.network_error) }
+            val type = object : TypeToken<List<GithubRelease>>() {}.type
+            return InputStreamReader(conn.inputStream).use { reader ->
+                Gson().fromJson<List<GithubRelease>>(reader, type) ?: emptyList()
             }
+        } finally {
             conn.disconnect()
-        } catch (e: Exception) {
-            Log.e(tag, e.toString())
         }
-        return json
     }
 
     data class YTDLPUpdateResponse (
@@ -160,48 +124,96 @@ class UpdateUtil(var context: Context) {
     @SuppressLint("Range", "UnspecifiedRegisterReceiverFlag")
     suspend fun downloadReleaseApk(release: GithubRelease, onProgress: (Long) -> Unit) : Result<File> {
         return withContext(Dispatchers.IO) {
+            var tempApk: File? = null
             try {
-                val releaseVersion = release.assets.firstOrNull { it.name.contains(Build.SUPPORTED_ABIS[0]) && !it.name.contains("foss") }!!
+                val releaseVersion = AppUpdatePolicy.selectAsset(
+                    release, Build.SUPPORTED_ABIS.toList(), BuildConfig.FLAVOR, BuildConfig.DEBUG
+                ) ?: error("لا يوجد ملف تحديث متوافق مع نسخة حمّل المثبتة")
+                val incoming = AppUpdatePolicy.version(release.tag_name)
+                val current = AppUpdatePolicy.version(BuildConfig.VERSION_NAME)
+                require(incoming != null && current != null && incoming > current) {
+                    context.getString(R.string.you_are_in_latest_version)
+                }
                 File(FileUtil.getDefaultApksPath()).mkdirs()
-                val tempApk = File(FileUtil.getDefaultApksPath(), "${releaseVersion.browser_download_url.split("/").last()}")
+                // Unique staging file: cancelled/failed downloads are never offered for installation.
+                tempApk = File.createTempFile("hammel-update-", ".apk", File(FileUtil.getDefaultApksPath()))
+                val downloadFile = requireNotNull(tempApk)
 
                 //download
                 val request = Request.Builder()
                     .url(releaseVersion.browser_download_url)
                     .build()
 
-                val response = sharedClient.newCall(request).execute()
-                if (!response.isSuccessful) {
-                    return@withContext Result.failure(Throwable(response.body.string()))
-                }
+                sharedClient.newCall(request).execute().use { response ->
+                    check(response.isSuccessful) { context.getString(R.string.network_error) }
+                    val body = response.body
+                    val totalBytes = body.contentLength()
+                    var bytesDownloaded = 0L
 
-                val body = response.body
-                val totalBytes = body.contentLength()
-                var bytesDownloaded = 0L
+                    body.byteStream().use { inputStream ->
+                        downloadFile.outputStream().use { outputStream ->
+                            val buffer = ByteArray(8192) // 8KB buffer
+                            var bytesRead: Int
 
-                body.byteStream().use { inputStream ->
-                    tempApk.outputStream().use { outputStream ->
-                        val buffer = ByteArray(8192) // 8KB buffer
-                        var bytesRead: Int
+                            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                                if (!isActive) throw CancellationException("Download cancelled by user")
 
-                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                            if (!isActive) throw CancellationException("Download cancelled by user")
+                                outputStream.write(buffer, 0, bytesRead)
+                                bytesDownloaded += bytesRead
 
-                            outputStream.write(buffer, 0, bytesRead)
-                            bytesDownloaded += bytesRead
-
-                            // Calculate percentage
-                            val progress = ((bytesDownloaded * 100) / totalBytes)
-                            onProgress(progress)
+                                // Calculate percentage
+                                val progress = if (totalBytes > 0) ((bytesDownloaded * 100) / totalBytes).coerceIn(0, 100) else 0L
+                                onProgress(progress)
+                            }
                         }
                     }
-                }
 
-                Result.success(tempApk)
+                    check(totalBytes < 0 || bytesDownloaded == totalBytes) { "ملف التحديث غير مكتمل" }
+                }
+                validateDownloadedApk(downloadFile, release.tag_name)
+                Result.success(downloadFile)
+            } catch (e: CancellationException) {
+                tempApk?.delete()
+                throw e
             } catch (e: Exception) {
+                tempApk?.delete()
                 Result.failure(e)
             }
         }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun validateDownloadedApk(file: File, advertisedTag: String) {
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            PackageManager.GET_SIGNING_CERTIFICATES
+        } else {
+            PackageManager.GET_SIGNATURES
+        }
+        val manager = context.packageManager
+        val installed = manager.getPackageInfo(context.packageName, flags)
+        val archive = manager.getPackageArchiveInfo(file.absolutePath, flags)
+            ?: error("تعذر قراءة ملف التحديث")
+        require(AppUpdatePolicy.isInstallable(
+            installed.packageName, PackageInfoCompat.getLongVersionCode(installed),
+            installed.versionName.orEmpty(), archive.packageName,
+            PackageInfoCompat.getLongVersionCode(archive), archive.versionName.orEmpty(), advertisedTag
+        )) { "ملف التحديث لا يخص حمّل أو ليس إصدارًا أحدث من المثبت" }
+
+        val compatibleSignature = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val oldSigning = installed.signingInfo
+            val newSigning = archive.signingInfo
+            if (oldSigning == null || newSigning == null) false
+            else if (oldSigning.hasMultipleSigners() || newSigning.hasMultipleSigners()) {
+                oldSigning.apkContentsSigners.toSet() == newSigning.apkContentsSigners.toSet()
+            } else {
+                newSigning.signingCertificateHistory?.toSet()
+                    ?.containsAll(oldSigning.apkContentsSigners.toSet()) == true
+            }
+        } else {
+            !installed.signatures.isNullOrEmpty() &&
+                installed.signatures.toSet() == archive.signatures?.toSet()
+        }
+        require(compatibleSignature) { "توقيع التحديث مختلف عن النسخة المثبتة؛ تعذر تحديثها مع الاحتفاظ بالبيانات" }
     }
 
     companion object {

@@ -823,6 +823,11 @@ class NotificationUtil(var context: Context) {
     }
 
     @SuppressLint("MissingPermission")
+    fun cancelAppUpdate() {
+        notificationManager.cancel(NEW_APP_UPDATE_NOTIFICATION_ID)
+    }
+
+    @SuppressLint("MissingPermission")
     fun showNewAppUpdate(version: String) {
         val notificationBuilder = getBuilder(DOWNLOAD_MISC_CHANNEL_ID)
 
@@ -843,6 +848,7 @@ class NotificationUtil(var context: Context) {
             .setContentIntent(intent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOnlyAlertOnce(true)
             .clearActions()
 
         notificationManager.notify(NEW_APP_UPDATE_NOTIFICATION_ID, notificationBuilder.build())
