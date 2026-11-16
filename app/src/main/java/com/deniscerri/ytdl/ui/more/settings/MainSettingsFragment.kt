@@ -135,6 +135,8 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
+        findPreference<Preference>("hammel_version")?.summary = BuildConfig.VERSION_NAME
+
         //about section -------------------------
         updateUtil = UpdateUtil(requireContext())
 

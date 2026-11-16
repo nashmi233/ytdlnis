@@ -2,16 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="@string/appearance">
-        <ListPreference
-            android:entries="@array/language_entries"
-            android:entryValues="@array/language_values"
-            android:defaultValue=""
-            android:icon="@drawable/baseline_translate_24"
-            app:key="app_language"
-            app:summary=""
-            app:title="@string/language" />
-
+    <PreferenceCategory android:title="المظهر">
         <ListPreference
             android:entries="@array/themes"
             android:entryValues="@array/themes_values"
@@ -19,12 +10,12 @@
             app:defaultValue="System"
             app:key="ytdlnis_theme"
             app:summary="@string/defaultValue"
-            app:title="@string/Theme" />
+            app:title="الوضع الفاتح أو الداكن" />
 
         <Preference
             android:defaultValue="default"
             android:icon="@drawable/ic_frame"
-            android:title="@string/app_icon"
+            android:title="أيقونة التطبيق"
             android:summary="@string/defaultValue"
             app:key="ytdlnis_icon" />
 
@@ -35,7 +26,7 @@
             app:defaultValue="blue"
             app:key="theme_accent"
             app:summary="Blue"
-            app:title="@string/accents" />
+            app:title="لون التطبيق" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
@@ -43,8 +34,7 @@
             android:icon="@drawable/baseline_invert_colors_24"
             android:key="high_contrast"
             app:summary="@string/pure_theme_summary"
-            app:title="@string/high_contrast" />
-
+            app:title="تباين مرتفع" />
 
         <MultiSelectListPreference
             app:icon="@drawable/baseline_hide_image_24"
@@ -52,7 +42,7 @@
             app:entries="@array/hide_thumbnail"
             app:entryValues="@array/hide_thumbnail_values"
             app:key="hide_thumbnails"
-            app:title="@string/hide_thumbnails" />
+            app:title="إخفاء الصور المصغرة" />
 
         <MultiSelectListPreference
             app:icon="@drawable/ic_card"
@@ -61,7 +51,7 @@
             android:entryValues="@array/modify_download_card_values"
             android:defaultValue="@array/modify_download_card_values"
             app:key="modify_download_card"
-            app:title="@string/modify_download_card" />
+            app:title="تخصيص شاشة التنزيل" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
@@ -71,11 +61,9 @@
             app:isPreferenceVisible="false"
             app:summary="@string/display_over_apps_summary"
             app:title="@string/display_over_apps" />
-
-
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="YouTube">
+    <PreferenceCategory android:title="يوتيوب">
         <ListPreference
             android:icon="@drawable/baseline_recommend_24"
             android:key="recommendations_home"
@@ -83,7 +71,7 @@
             android:entries="@array/video_recommendations"
             android:entryValues="@array/video_recommnedations_values"
             app:summary="@string/video_recommendations_summary"
-            app:title="@string/video_recommendations" />
+            app:title="اقتراحات الصفحة الرئيسية" />
 
         <EditTextPreference
             android:icon="@drawable/baseline_recommend_24"
@@ -94,7 +82,7 @@
             android:icon="@drawable/ic_key"
             app:key="api_key"
             android:summary="@string/api_key_summary"
-            app:title="@string/api_key" />
+            app:title="مفتاح API" />
 
         <ListPreference
             android:defaultValue="YT_DLP"
@@ -103,7 +91,7 @@
             android:icon="@drawable/baseline_manage_search_24"
             app:key="youtube_data_fetching_extractor"
             app:useSimpleSummaryProvider="true"
-            app:title="@string/data_fetching_extractor_youtube" />
+            app:title="مصدر بيانات يوتيوب" />
 
         <ListPreference
             android:defaultValue="yt-dlp"
@@ -112,8 +100,7 @@
             android:icon="@drawable/baseline_manage_search_24"
             app:key="formats_source"
             app:useSimpleSummaryProvider="true"
-            app:title="@string/format_source" />
-
+            app:title="مصدر الجودات" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
@@ -121,11 +108,10 @@
             app:icon="@drawable/baseline_format_quote_24"
             app:key="use_itemurl_instead_playlisturl"
             app:summary="@string/use_item_url_not_playlist_summary"
-            app:title="@string/use_item_url_not_playlist" />
-
+            app:title="استخدام رابط العنصر بدل القائمة" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/misc">
+    <PreferenceCategory android:title="إعدادات أخرى">
         <ListPreference
             android:defaultValue=""
             android:entries="@array/countries"
@@ -133,7 +119,7 @@
             app:icon="@drawable/ic_language"
             app:useSimpleSummaryProvider="true"
             app:key="locale"
-            app:title="@string/preferred_locale" />
+            app:title="المنطقة المفضلة" />
 
         <Preference
             android:defaultValue="Home"
@@ -141,13 +127,13 @@
             app:useSimpleSummaryProvider="true"
             app:key="start_destination"
             app:isPreferenceVisible="false"
-            app:title="@string/preferred_home_screen" />
+            app:title="الشاشة الرئيسية" />
 
         <Preference
             android:defaultValue="Home,History,Queue,More"
             android:icon="@drawable/baseline_home_filled_24"
             android:key="navigation_bar"
-            android:title="@string/preferred_home_screen" />
+            android:title="شريط التنقل" />
 
         <ListPreference
             android:defaultValue="always"
@@ -156,7 +142,7 @@
             android:icon="@drawable/baseline_disabled_visible_24"
             app:key="label_visibility"
             app:useSimpleSummaryProvider="true"
-            app:title="@string/label_visibility" />
+            app:title="إظهار أسماء الأزرار" />
 
         <ListPreference
             android:defaultValue="ytsearch"
@@ -165,7 +151,7 @@
             android:icon="@drawable/baseline_manage_search_24"
             app:key="search_engine"
             app:summary="@string/preferred_search_engine_summary"
-            app:title="@string/preferred_search_engine" />
+            app:title="محرك البحث" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
@@ -173,7 +159,7 @@
             android:icon="@drawable/ic_search_accent"
             android:key="search_suggestions"
             app:summary="@string/search_suggestions_summary"
-            app:title="@string/search_suggestions" />
+            app:title="اقتراحات البحث" />
 
         <MultiSelectListPreference
             android:icon="@drawable/baseline_swipe_24"
@@ -182,48 +168,46 @@
             android:entryValues="@array/swipe_gestures_values"
             android:defaultValue="@array/swipe_gestures_values"
             app:summary="@string/swipe_gestures_summary"
-            app:title="@string/swipe_gestures" />
+            app:title="إيماءات السحب" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="true"
             android:icon="@drawable/baseline_swipe_24"
             android:key="swipe_gestures_download_card"
-            app:title="@string/swipe_gestures_download_card" />
+            app:title="السحب في شاشة التنزيل" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="false"
             android:icon="@drawable/baseline_share2_24"
             android:key="show_terminal"
-            app:title="@string/show_terminal" />
+            app:title="إظهار الطرفية" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="false"
             android:icon="@drawable/baseline_share2_24"
             android:key="show_quick_download_share"
-            app:title="@string/show_quick_download_share_menu" />
+            app:title="تنزيل سريع من قائمة المشاركة" />
 
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="true"
             android:icon="@drawable/baseline_numbers_24"
             android:key="show_count_downloads"
-            app:title="@string/show_download_count" />
-
+            app:title="إظهار عدد التنزيلات" />
 
         <Preference
             app:icon="@drawable/ic_battery"
             app:key="ignore_battery"
-            app:title="@string/ignore_battery_optimization" />
+            app:title="تجاهل تحسين البطارية" />
 
         <Preference
             app:icon="@drawable/baseline_reset_tv_24"
             app:key="reset_preferences"
             android:summary="@string/reset_preferences_in_screen"
-            app:title="@string/reset" />
-
+            app:title="إعادة ضبط الإعدادات" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -2,16 +2,13 @@ package com.deniscerri.ytdl.ui.more
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -22,9 +19,7 @@ import com.deniscerri.ytdl.MainActivity
 import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.viewmodel.DownloadViewModel
 import com.deniscerri.ytdl.ui.more.settings.SettingsActivity
-import com.deniscerri.ytdl.ui.more.terminal.TerminalActivity
 import com.deniscerri.ytdl.util.NavbarUtil
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
@@ -32,9 +27,6 @@ import kotlin.system.exitProcess
 class MoreFragment : Fragment() {
     private lateinit var mainSharedPreferences: SharedPreferences
     private lateinit var mainSharedPreferencesEditor: SharedPreferences.Editor
-    private lateinit var terminal: TextView
-    private lateinit var logs: TextView
-    private lateinit var commandTemplates: TextView
     private lateinit var downloadQueue: TextView
     private lateinit var downloads: TextView
     private lateinit var cookies: TextView
@@ -57,9 +49,6 @@ class MoreFragment : Fragment() {
 
         mainSharedPreferences =  PreferenceManager.getDefaultSharedPreferences(requireContext())
         mainSharedPreferencesEditor = mainSharedPreferences.edit()
-        terminal = view.findViewById(R.id.terminal)
-        logs = view.findViewById(R.id.logs)
-        commandTemplates = view.findViewById(R.id.command_templates)
         downloads = view.findViewById(R.id.downloads)
         downloadQueue = view.findViewById(R.id.download_queue)
         cookies = view.findViewById(R.id.cookies)
@@ -67,39 +56,18 @@ class MoreFragment : Fragment() {
         terminateApp = view.findViewById(R.id.terminate)
         settings = view.findViewById(R.id.settings)
 
-        val appIcon = view.findViewById<ImageView>(R.id.app_icon)
-        if (mainSharedPreferences.getString("theme_accent", "blue") == "Default" && Build.VERSION.SDK_INT >= 32) {
-            appIcon.backgroundTintList = MaterialColors.getColorStateList(requireContext(), R.attr.colorPrimary, ContextCompat.getColorStateList(requireContext(), R.color.icon_fg)!!)
-        } else {
-            appIcon.backgroundTintList = null
-        }
+        bindQuickSettings(view)
 
-        var showingTerminal = false
         var showingDownloads = false
         var showingDownloadQueue = false
 
         NavbarUtil.getNavBarItems(requireContext()).apply {
-            showingTerminal = any { n -> n.itemId == R.id.terminalActivity && n.isVisible }
             showingDownloads = any { n -> n.itemId == R.id.historyFragment && n.isVisible }
             showingDownloadQueue = any { n -> n.itemId == R.id.downloadQueueMainFragment && n.isVisible }
         }
 
-        terminal.isVisible = !showingTerminal
         downloads.isVisible = !showingDownloads
         downloadQueue.isVisible = !showingDownloadQueue
-
-        terminal.setOnClickListener {
-            val intent = Intent(context, TerminalActivity::class.java)
-            startActivity(intent)
-        }
-
-        logs.setOnClickListener {
-            findNavController().navigate(R.id.downloadLogListFragment)
-        }
-
-        commandTemplates.setOnClickListener {
-            findNavController().navigate(R.id.commandTemplatesFragment)
-        }
 
         downloads.setOnClickListener {
             findNavController().navigate(R.id.historyFragment)
@@ -130,6 +98,42 @@ class MoreFragment : Fragment() {
             startActivity(intent)
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        view?.let { bindQuickSettings(it) }
+    }
+
+    private fun bindQuickSettings(view: View) {
+        view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.auto_detect_clipboard).apply {
+            setOnCheckedChangeListener(null)
+            isChecked = mainSharedPreferences.getBoolean("auto_detect_clipboard", true)
+            setOnCheckedChangeListener { _, checked ->
+                mainSharedPreferences.edit().putBoolean("auto_detect_clipboard", checked).apply()
+            }
+        }
+        view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.auto_download_copied_link).apply {
+            setOnCheckedChangeListener(null)
+            isChecked = mainSharedPreferences.getBoolean("auto_download_copied_link", false)
+            setOnCheckedChangeListener { _, checked ->
+                mainSharedPreferences.edit().putBoolean("auto_download_copied_link", checked).apply()
+            }
+        }
+        view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.save_to_gallery).apply {
+            setOnCheckedChangeListener(null)
+            isChecked = mainSharedPreferences.getBoolean("save_to_gallery", true)
+            setOnCheckedChangeListener { _, checked ->
+                mainSharedPreferences.edit().putBoolean("save_to_gallery", checked).apply()
+            }
+        }
+        view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.ask_tiktok_download_type).apply {
+            setOnCheckedChangeListener(null)
+            isChecked = mainSharedPreferences.getBoolean("ask_tiktok_download_type", true)
+            setOnCheckedChangeListener { _, checked ->
+                mainSharedPreferences.edit().putBoolean("ask_tiktok_download_type", checked).apply()
+            }
+        }
     }
 
     fun showTerminateConfirmationDialog(skipPreference: Boolean = false) {

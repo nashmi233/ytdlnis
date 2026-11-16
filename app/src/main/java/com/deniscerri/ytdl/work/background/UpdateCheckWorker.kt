@@ -25,9 +25,16 @@ class UpdateCheckWorker(
         val notificationUtil = NotificationUtil(App.instance)
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-        val newRelease = updateUtil.tryGetNewVersion()
-        if (newRelease.isSuccess && BuildConfig.FLAVOR == "github") {
-            notificationUtil.showNewAppUpdate(newRelease.getOrNull()!!.tag_name)
+        if (BuildConfig.FLAVOR == "github" && sharedPreferences.getBoolean("update_app", false)) {
+            updateUtil.tryGetNewVersion().getOrNull()?.let { release ->
+                val reminderKey = "${BuildConfig.VERSION_NAME}:${release.tag_name}"
+                if (sharedPreferences.getString("last_app_update_reminder", null) != reminderKey) {
+                    notificationUtil.showNewAppUpdate(release.tag_name)
+                    sharedPreferences.edit().putString("last_app_update_reminder", reminderKey).apply()
+                }
+            }
+        } else {
+            notificationUtil.cancelAppUpdate()
         }
 
         val skipRemindingPackageUpdate = sharedPreferences.getStringSet("skip_reminding_package_update", setOf())!!.toMutableSet()
