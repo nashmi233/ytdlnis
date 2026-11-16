@@ -234,14 +234,20 @@
         <item name="colorPrimaryInverse">@color/orange_md_theme_dark_inversePrimary</item>
     </style>
 
+    <!-- Black canvas, distinct raised surfaces and readable foregrounds. -->
     <style name="Pure">
         <item name="elevationOverlayEnabled">false</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
-        <item name="android:windowBackground">@android:color/black</item>
-
-        <item name="android:colorBackground">@android:color/black</item>
-        <item name="colorSurface">@android:color/black</item>
-
+        <item name="android:navigationBarColor">#171A21</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="colorOnBackground">#F2F4FA</item>
+        <item name="colorSurface">#242833</item>
+        <item name="colorOnSurface">#F2F4FA</item>
+        <item name="colorSurfaceVariant">#333A48</item>
+        <item name="colorOnSurfaceVariant">#CDD3E0</item>
+        <item name="colorOutline">#7C879B</item>
+        <item name="android:textColorPrimary">#F2F4FA</item>
+        <item name="android:textColorSecondary">#CDD3E0</item>
     </style>
 
 </resources>

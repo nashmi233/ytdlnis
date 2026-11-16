@@ -22,6 +22,14 @@ def shot(name):
  dump()
 adb('shell','am','start','-n','com.nashmi233.downloader/com.deniscerri.ytdl.MainActivity')
 time.sleep(12)
+shot('home')
+# Open the existing SearchBar overflow without invoking a menu action.
+for node in dump().iter('node'):
+ if node.get('class') == 'android.widget.ImageView' and node.get('clickable') == 'true' and node.get('content-desc'):
+  x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds')))
+  if x2 < 540:
+   adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(1)
+   shot('menu');adb('shell','input','keyevent','4');break
 tap_id('moreFragment')
 shot('more')
 for key in ['auto_detect_clipboard','auto_download_copied_link','save_to_gallery','ask_tiktok_download_type']:
