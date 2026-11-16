@@ -1,5 +1,6 @@
 package com.deniscerri.ytdl.receiver
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -7,23 +8,18 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.PixelFormat
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.provider.Settings
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.WindowManager
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
@@ -37,21 +33,19 @@ import com.deniscerri.ytdl.database.viewmodel.DownloadViewModel
 import com.deniscerri.ytdl.database.viewmodel.HistoryViewModel
 import com.deniscerri.ytdl.database.viewmodel.ResultViewModel
 import com.deniscerri.ytdl.ui.BaseActivity
-import com.deniscerri.ytdl.util.Extensions.extractURL
 import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.deniscerri.ytdl.util.SharedLinkPolicy
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
-import kotlin.properties.Delegates
 
 
 class ShareActivity : BaseActivity() {
@@ -64,10 +58,7 @@ class ShareActivity : BaseActivity() {
     private lateinit var downloadCardViewModel: DownloadCardViewModel
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var navController: NavController
-    private var quickDownload by Delegates.notNull<Boolean>()
 
-    private lateinit var wm: WindowManager
-    private lateinit var myView: View
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,39 +70,9 @@ class ShareActivity : BaseActivity() {
             insets
         }
 
-        if (Settings.canDrawOverlays(this)){
-            val params = WindowManager.LayoutParams(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                } else {
-                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
-                },
-                PixelFormat.TRANSLUCENT
-            )
-            wm = getSystemService(WINDOW_SERVICE) as WindowManager
-
-            val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            myView = inflater.inflate(R.layout.activity_share, null)
-            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            wm.addView(myView, params)
-            setContentView(R.layout.activity_share)
-
-        }else{
-            window.run {
-                setBackgroundDrawable(ColorDrawable(0))
-                setLayout(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                } else {
-                    setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
-                }
-            }
-
-            setContentView(R.layout.activity_share)
-        }
+        // Receiving a share is a normal activity; no overlay permission/window is needed.
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        setContentView(R.layout.activity_share)
 
         context = baseContext
         resultViewModel = ViewModelProvider(this)[ResultViewModel::class.java]
@@ -122,67 +83,77 @@ class ShareActivity : BaseActivity() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         cookieViewModel.updateCookiesFile()
+        if (savedInstanceState?.getBoolean("share_consumed") == true) {
+            finish()
+            return
+        }
         handleIntents(intent)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("share_consumed", intent.action == null)
+        super.onSaveInstanceState(outState)
+    }
+
+    private var requestedSharePermissions = false
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1 && (Build.VERSION.SDK_INT >= 30 ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
+            handleIntents(intent)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntents(intent)
     }
 
     private fun handleIntents(intent: Intent) {
-        askPermissions()
+        val needsStorage = Build.VERSION.SDK_INT < 30 &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        val needsNotifications = Build.VERSION.SDK_INT >= 33 &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (!requestedSharePermissions && (needsStorage || needsNotifications)) {
+            requestedSharePermissions = true
+            askPermissions()
+            return
+        }
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.frame_layout) as NavHostFragment
         navController = navHostFragment.findNavController()
-        navController.addOnDestinationChangedListener(object: NavController.OnDestinationChangedListener{
-            @SuppressLint("RestrictedApi")
-            override fun onDestinationChanged(
-                controller: NavController,
-                destination: NavDestination,
-                arguments: Bundle?
-            ) {
-                navController.removeOnDestinationChangedListener(this)
-                CoroutineScope(SupervisorJob()).launch {
-                    navController.currentBackStack.collectLatest {
-                        if (it.isEmpty()){
-                            this@ShareActivity.finish()
-                        }
-                    }
-                }
-            }
-        })
-
         val action = intent.action
-        Log.e("aa", intent.toString())
         if (Intent.ACTION_SEND == action || Intent.ACTION_VIEW == action) {
-            if (intent.getStringExtra(Intent.EXTRA_TEXT) == null && Intent.ACTION_SEND == action){
+            val sharedText = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+                ?: intent.clipData?.let { clip ->
+                    (0 until clip.itemCount).mapNotNull { index ->
+                        val item = clip.getItemAt(index)
+                        item.text?.toString() ?: item.uri?.toString()
+                    }.joinToString("\n")
+                }
+            if (sharedText.isNullOrBlank() && action == Intent.ACTION_SEND && intent.hasExtra(Intent.EXTRA_STREAM)) {
                 intent.setClass(this, MainActivity::class.java)
                 startActivity(intent)
-                finishAffinity()
+                finish()
+                return
+            }
+            val inputQuery = SharedLinkPolicy.extract(if (action == Intent.ACTION_SEND) sharedText else intent.dataString)
+            if (inputQuery == null) {
+                Toast.makeText(this, "لم أجد رابط فيديو صالحًا في المشاركة", Toast.LENGTH_LONG).show()
+                finish()
                 return
             }
 
             runCatching { supportFragmentManager.popBackStack() }
 
-            quickDownload = intent.getBooleanExtra(
-                "quick_download",
-                sharedPreferences.getBoolean("quick_download", false) ||
-                    sharedPreferences.getString("preferred_download_type", "video") == "command"
-            )
-
-            val data = when(action){
-                Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_TEXT)!!
-                else -> intent.dataString!!
-            }
-
-            val inputQuery = data.extractURL()
             val ai = packageManager.getActivityInfo(componentName, PackageManager.GET_META_DATA)
 
             val type = intent.getStringExtra("TYPE")
-            val background = intent.getBooleanExtra(
-                "BACKGROUND",
-                ai.metaData?.getBoolean("quick_run_background", false) == true
+            val background = SharedLinkPolicy.downloadImmediately(
+                action == Intent.ACTION_SEND, type,
+                intent.getBooleanExtra("BACKGROUND", ai.metaData?.getBoolean("quick_run_background", false) == true)
             )
 
             lifecycleScope.launch {
@@ -190,12 +161,8 @@ class ShareActivity : BaseActivity() {
                     resultViewModel.getAllByURL(inputQuery)
                 }
 
-                val result = if (existingResults.size == 1) {
-                    existingResults.first()
-                } else {
-                    if (existingResults.size > 1) resultViewModel.deleteAll()
-                    downloadViewModel.createEmptyResultItem(inputQuery)
-                }
+                val result = existingResults.firstOrNull()
+                    ?: downloadViewModel.createEmptyResultItem(inputQuery)
 
                 val isTikTok = inputQuery.contains("tiktok.com", ignoreCase = true)
                 val shouldAskTikTok = isTikTok &&
@@ -208,8 +175,8 @@ class ShareActivity : BaseActivity() {
                     return@launch
                 }
 
-                val downloadType = DownloadType.valueOf(
-                    type ?: downloadViewModel.getDownloadType(url = result.url).toString()
+                val downloadType = SharedLinkPolicy.downloadType(
+                    action == Intent.ACTION_SEND, type, downloadViewModel.getDownloadType(url = result.url)
                 )
                 continueDownload(result, inputQuery, downloadType, background)
             }
@@ -250,6 +217,7 @@ class ShareActivity : BaseActivity() {
         dialog.show()
     }
 
+    @SuppressLint("RestrictedApi")
     private suspend fun continueDownload(
         result: ResultItem,
         inputQuery: String,
@@ -262,6 +230,11 @@ class ShareActivity : BaseActivity() {
             val bundle = Bundle()
             bundle.putSerializable("type", downloadType)
             navController.setGraph(R.navigation.share_nav_graph, bundle)
+            lifecycleScope.launch {
+                navController.currentBackStack.collectLatest { backStack ->
+                    if (backStack.isEmpty()) finish()
+                }
+            }
         }else{
             Toast.makeText(
                 this@ShareActivity,
@@ -269,14 +242,26 @@ class ShareActivity : BaseActivity() {
                 Toast.LENGTH_SHORT
             ).show()
 
-            withContext(Dispatchers.IO){
-                val downloadItem = downloadViewModel.createDownloadItemFromResult(
-                    result = result,
-                    givenType = downloadType
-                )
-                downloadViewModel.queueDownloads(listOf(downloadItem))
+            try {
+                val queued = withContext(Dispatchers.IO) {
+                    val downloadItem = downloadViewModel.createDownloadItemFromResult(
+                        result = result,
+                        givenType = downloadType
+                    )
+                    downloadViewModel.queueDownloads(listOf(downloadItem))
+                }
+                intent.action = null
+                val message = if (queued.duplicateDownloadIDs.isNotEmpty()) {
+                    "هذا الفيديو موجود مسبقًا في التنزيلات"
+                } else queued.message.ifBlank { "بدأ تنزيل الفيديو" }
+                Toast.makeText(this@ShareActivity, message, Toast.LENGTH_SHORT).show()
+                this@ShareActivity.finish()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Toast.makeText(this@ShareActivity, e.message ?: "تعذر بدء التنزيل", Toast.LENGTH_LONG).show()
+                finish()
             }
-            this@ShareActivity.finish()
         }
     }
 
@@ -366,19 +351,7 @@ class ShareActivity : BaseActivity() {
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        startActivity(Intent(this, MainActivity::class.java))
         super.onConfigurationChanged(newConfig)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::wm.isInitialized && ::myView.isInitialized) {
-            try {
-                wm.removeView(myView)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
 
     override fun onResume() {
