@@ -1,67 +1,62 @@
-<h1 align="center">
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="22%" />
-  <br>
-  حمّل
-  <br>
-  <sub>HAMMEL</sub>
-</h1>
-
-<h3 align="center">
-تطبيق أندرويد بسيط وقوي لتنزيل الفيديو والصوت باستخدام yt-dlp.
-</h3>
-
 <div align="center">
+<img src="app/src/main/res/drawable-nodpi/hammel_logo_black.webp" width="160" alt="شعار حمّل" />
+<h1>حمّل · HAMMEL</h1>
+<p>الفيديو والصوت، من الرابط إلى جهازك.</p>
+<p>تطبيق أندرويد بواجهة عربية لتنزيل الوسائط وإدارة ملفاتك، مع مشاركة مباشرة من التطبيقات الأخرى.</p>
 
-[![Download](https://custom-icon-badges.herokuapp.com/badge/Download-blue?style=for-the-badge&logo=download&logoColor=white)](https://github.com/nashmi233/ytdlnis/releases/latest)
-[![Releases](https://img.shields.io/github/v/release/nashmi233/ytdlnis?include_prereleases&label=Release)](https://github.com/nashmi233/ytdlnis/releases)
-[![Android](https://img.shields.io/badge/Android-7.0%2B-green?logo=android)](https://github.com/nashmi233/ytdlnis)
+[تنزيل التطبيق](https://github.com/nashmi233/ytdlnis/releases) · [سجل الإصدارات](https://github.com/nashmi233/ytdlnis/releases) · [الإبلاغ عن مشكلة](https://github.com/nashmi233/ytdlnis/issues)
 
+![Android 7+](https://img.shields.io/badge/Android-7.0%2B-87CEFA)
+![License GPL v3](https://img.shields.io/badge/License-GPL_v3-blue)
 ![Android CI](https://github.com/nashmi233/ytdlnis/actions/workflows/android.yml/badge.svg?branch=custom-app)
-
 </div>
 
-## المميزات
+## تنزيل يبدأ بالمشاركة
 
-- تنزيل الفيديو والصوت من الروابط المدعومة بواسطة yt-dlp.
-- استقبال الرابط مباشرة من قائمة المشاركة في التطبيقات.
-- تنزيل سريع مع خيار بدء التحميل مباشرة.
-- التعرف على الرابط المنسوخ عند فتح التطبيق أو الرجوع إليه.
-- خيارات خاصة لروابط TikTok مثل الفيديو أو الصوت أو صورة الغلاف.
-- دعم قائمة انتظار التنزيلات والتنزيل في الخلفية.
-- اختيار مكان حفظ الملفات وإظهارها في المعرض عند الحاجة.
-- واجهة عربية مبسطة.
-- دعم صيغ وجودات متعددة حسب المصدر.
-- سجل للتنزيلات وإعادة محاولة العناصر الفاشلة.
+من تيك توك أو أي منصة يدعمها محرك التنزيل، اختر **مشاركة ← حمّل** لبدء تنزيل الفيديو. ويمكنك لصق الرابط داخل التطبيق لاختيار الوسائط المتاحة. تختلف الجودة والصيغ وإمكانية التنزيل باختلاف المصدر.
 
-## التحميل
+## ما يقدمه حمّل
 
-يمكنك تنزيل أحدث نسخة متاحة من صفحة الإصدارات:
+- **مشاركة مباشرة:** استقبال رابط الفيديو من التطبيقات الأخرى وإضافته إلى قائمة التنزيلات.
+- **تحكم واضح:** التعرّف على الروابط المنسوخة، بدء التنزيل تلقائيًا، والحفظ في الاستوديو من صفحة «المزيد».
+- **خيارات تيك توك:** اختيار فيديو أو صوت أو غلاف عند فتح الرابط داخل التطبيق؛ المشاركة المباشرة تنزّل الفيديو.
+- **إدارة التنزيلات:** قائمة انتظار، متابعة التقدم، سجل للملفات وإعادة المحاولة.
+- **حفظ مرن:** اختيار المجلدات، إظهار الملفات في المعرض، ونسخ الإعدادات والبيانات احتياطيًا.
+- **واجهة عربية:** اتجاه من اليمين إلى اليسار، خلفية سوداء وشعار موحّد داخل التطبيق.
 
-**[Releases](https://github.com/nashmi233/ytdlnis/releases)**
+## صور من التطبيق
 
-> الإصدارات التجريبية تحمل علامة **Pre-release** إلى أن يتم اعتماد النسخة المستقرة النهائية.
+تُلتقط هذه الصور من ملف APK على محاكي أندرويد، دون تعديل الواجهة في الصور.
 
-## معلومات التطبيق
+<p align="center">
+<img src="docs/screenshots/more.png" width="30%" alt="المزيد والخيارات السريعة" />
+<img src="docs/screenshots/settings.png" width="30%" alt="إعدادات حمّل" />
+<img src="docs/screenshots/about.png" width="30%" alt="معلومات التطبيق" />
+</p>
 
-**اسم التطبيق:** حمّل  
-**الاسم الإنجليزي:** HAMMEL  
-**Package Name:** `com.nashmi233.downloader`  
-**الحد الأدنى:** Android 7.0
+## التثبيت
 
-## البناء والتطوير
+افتح [صفحة الإصدارات](https://github.com/nashmi233/ytdlnis/releases) واختر ملف **universal.apk** المناسب لجميع المعماريات، أو ملف APK المتوافق مع جهازك إن توفر. يتطلب التطبيق Android 7.0 أو أحدث. يظهر رقم النسخة داخل الإعدادات.
 
-المشروع مبني لأندرويد ويستخدم Kotlin وJava وyt-dlp ومكونات FFmpeg/Aria2c اللازمة لمعالجة التنزيلات.
+تُبيّن صفحة كل إصدار حالة النسخة وتوقيعها. الإصدارات الموسومة **Pre-release / Debug** نسخ تجريبية. يتطلب التحديث فوق تثبيت سابق توافق توقيع التطبيق؛ احتفظ بنسخة احتياطية من بياناتك قبل تغيير التثبيت.
 
-يتم فحص النسخ المعدلة من خلال GitHub Actions قبل نشر إصدارات الاختبار.
+## للمطورين
 
-## الاستخدام المسؤول
+الكود المخصص لحمّل موجود في فرع [`custom-app`](https://github.com/nashmi233/ytdlnis/tree/custom-app). يستخدم Kotlin وJava، ومحرك yt-dlp، ومكونات FFmpeg وAria2c لمعالجة التنزيلات. معرّف التطبيق: `com.nashmi233.downloader`.
 
-استخدم التطبيق لتنزيل المحتوى الذي تملك حقوقه أو لديك إذن بتنزيله، والتزم بشروط المواقع والخدمات التي تستخدمها.
+للبناء باستخدام JDK 17 وAndroid SDK:
 
-## المصدر والترخيص
+```sh
+git clone --branch custom-app https://github.com/nashmi233/ytdlnis.git
+cd ytdlnis
+touch keystore.properties
+./gradlew testGithubDebugUnitTest lintGithubDebug assembleGithubDebug
+```
 
-**حمّل (HAMMEL) نسخة معدلة بدأ تخصيصها في 2026 اعتمادًا على مشروع [YTDLnis](https://github.com/deniscerri/ytdlnis) مفتوح المصدر. هذه النسخة معدلة ومستقلة وليست إصدارًا رسميًا من المشروع الأصلي.**
+يشغّل GitHub Actions اختبارات الوحدة وفحص Android lint وبناء APK، ثم يتحقق من الواجهة على محاكي أندرويد ويلتقط صورها. إعداد توقيع إصدار توزيع مستقل مسؤولية من يبني النسخة.
 
-المشروع موزع وفق ترخيص **GNU GPL v3.0**، وتبقى إشعارات حقوق النشر والترخيص الأصلية محفوظة في المصدر وسجل Git.
+## المشروع والترخيص
 
-[عرض ملف LICENSE](LICENSE)
+**تطوير وتخصيص: نشمي.** حمّل نسخة مستقلة مبنية على [YTDLnis](https://github.com/deniscerri/ytdlnis)، مع الاحتفاظ بإشعارات مؤلفيه ومساهميه. يستخدم محرك [yt-dlp](https://github.com/yt-dlp/yt-dlp) لتنزيل الوسائط.
+
+المصدر متاح بموجب [GNU GPL v3.0](LICENSE). راجع [الخصوصية](PRIVACY.md) لمعرفة كيفية استخدام البيانات والأذونات. استخدم التطبيق للمحتوى الذي تملك حق تنزيله وبما يتوافق مع شروط مصدره.

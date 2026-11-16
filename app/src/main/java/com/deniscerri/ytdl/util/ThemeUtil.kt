@@ -24,6 +24,14 @@ object ThemeUtil {
     private val activities = mutableListOf<Activity>()
 
     fun init(app: Application) {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(app)
+        if (!preferences.getBoolean("hammel_black_theme_v1", false)) {
+            preferences.edit()
+                .putString("ytdlnis_theme", "Dark")
+                .putBoolean("high_contrast", true)
+                .putBoolean("hammel_black_theme_v1", true)
+                .apply()
+        }
         app.registerActivityLifecycleCallbacks(object: Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(p0: Activity, p1: Bundle?) {
                 activities.add(p0)

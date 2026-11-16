@@ -18,59 +18,51 @@
 
             <ImageView
                 android:id="@+id/app_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="144dp"
+                android:layout_height="144dp"
+                android:layout_marginVertical="12dp"
                 android:layout_gravity="center"
-                android:background="@drawable/ic_app_icon"
-                android:scaleType="center" />
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/hammel_logo_black"
+                android:scaleType="fitCenter" />
 
-            <TextView
-                android:id="@+id/terminal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/terminal"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:paddingHorizontal="15dp"
-                android:paddingVertical="15dp"
-                android:drawablePadding="35dp"
-                android:textSize="16sp"
-                app:drawableStartCompat="@drawable/ic_terminal" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/auto_detect_clipboard" android:text="@string/hammel_auto_detect_clipboard_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_auto_detect_clipboard_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_detect_clipboard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_auto_detect_clipboard_title" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/logs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/logs"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:paddingHorizontal="15dp"
-                android:paddingVertical="15dp"
-                android:drawablePadding="35dp"
-                android:textSize="16sp"
-                app:drawableStartCompat="@drawable/ic_baseline_file_open_24" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/auto_download_copied_link" android:text="@string/hammel_auto_download_copied_link_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_auto_download_copied_link_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_download_copied_link" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_auto_download_copied_link_title" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/save_to_gallery" android:text="@string/hammel_save_to_gallery_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_save_to_gallery_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/save_to_gallery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_save_to_gallery_title" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/ask_tiktok_download_type" android:text="@string/hammel_ask_tiktok_download_type_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_ask_tiktok_download_type_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/ask_tiktok_download_type" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_ask_tiktok_download_type_title" />
+            </LinearLayout>
 
 
-            <TextView
-                android:id="@+id/command_templates"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="35dp"
-                android:textSize="16sp"
-                android:paddingVertical="15dp"
-                android:text="@string/command_templates"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:paddingHorizontal="15dp"
-                app:drawableStartCompat="@drawable/ic_baseline_keyboard_arrow_right_24" />
 
-            <TextView
+
+
+<TextView
                 android:id="@+id/downloads"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
