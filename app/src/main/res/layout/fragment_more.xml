@@ -26,7 +26,7 @@
                 android:src="@drawable/hammel_logo_black"
                 android:scaleType="fitCenter" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+            <LinearLayout android:background="@drawable/hammel_control_panel" android:layout_marginHorizontal="12dp" android:layout_marginVertical="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/auto_detect_clipboard" android:text="@string/hammel_auto_detect_clipboard_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_auto_detect_clipboard_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -34,7 +34,7 @@
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_detect_clipboard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_auto_detect_clipboard_title" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+            <LinearLayout android:background="@drawable/hammel_control_panel" android:layout_marginHorizontal="12dp" android:layout_marginVertical="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/auto_download_copied_link" android:text="@string/hammel_auto_download_copied_link_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_auto_download_copied_link_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -42,7 +42,7 @@
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_download_copied_link" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_auto_download_copied_link_title" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+            <LinearLayout android:background="@drawable/hammel_control_panel" android:layout_marginHorizontal="12dp" android:layout_marginVertical="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/save_to_gallery" android:text="@string/hammel_save_to_gallery_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_save_to_gallery_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -50,7 +50,7 @@
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/save_to_gallery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:contentDescription="@string/hammel_save_to_gallery_title" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
+            <LinearLayout android:background="@drawable/hammel_control_panel" android:layout_marginHorizontal="12dp" android:layout_marginVertical="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="10dp">
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/ask_tiktok_download_type" android:text="@string/hammel_ask_tiktok_download_type_title" android:textAppearance="?attr/textAppearanceTitleMedium" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/hammel_ask_tiktok_download_type_summary" android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -73,7 +73,10 @@
                 android:textStyle="bold"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingHorizontal="15dp"
                 app:drawableTint="?android:colorAccent"
                 app:drawableStartCompat="@drawable/ic_downloads" />
@@ -89,7 +92,10 @@
                 android:textStyle="bold"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingHorizontal="15dp"
                 app:drawableTint="?android:colorAccent"
                 app:drawableStartCompat="@drawable/baseline_downloading_24" />
@@ -105,7 +111,10 @@
                 android:textStyle="bold"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingHorizontal="15dp"
                 app:drawableStartCompat="@drawable/baseline_cookie_24" />
 
@@ -120,7 +129,10 @@
                 android:textStyle="bold"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingHorizontal="15dp"
                 app:drawableStartCompat="@drawable/baseline_calendar_month_24" />
 
@@ -132,7 +144,10 @@
                 android:textSize="16sp"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingVertical="15dp"
                 android:text="@string/kill_app"
                 android:textStyle="bold"
@@ -155,7 +170,10 @@
                 android:textStyle="bold"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/hammel_control_panel"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginVertical="4dp"
                 android:paddingHorizontal="15dp"
                 app:drawableStartCompat="@drawable/ic_settings" />
 

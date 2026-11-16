@@ -168,6 +168,7 @@
 
             <com.google.android.material.search.SearchBar
                 android:id="@+id/search_bar"
+                android:backgroundTint="?attr/colorSurface"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:hint="الصق الرابط هنا"
