@@ -246,8 +246,8 @@
         <item name="colorSurfaceVariant">#333A48</item>
         <item name="colorOnSurfaceVariant">#CDD3E0</item>
         <item name="colorOutline">#7C879B</item>
-        <item name="android:textColorPrimary">#F2F4FA</item>
-        <item name="android:textColorSecondary">#CDD3E0</item>
+        <item name="android:textColorPrimary">@color/hammel_text_primary</item>
+        <item name="android:textColorSecondary">@color/hammel_text_secondary</item>
     </style>
 
 </resources>

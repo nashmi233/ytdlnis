@@ -4,10 +4,20 @@ from pathlib import Path
 out=Path('screenshots'); out.mkdir(exist_ok=True)
 def adb(*args): return subprocess.check_output(['adb',*args])
 def dump():
- adb('shell','uiautomator','dump','/sdcard/window.xml')
- raw=adb('shell','cat','/sdcard/window.xml')
- (out/'window.xml').write_bytes(raw)
- return ET.fromstring(raw)
+ for _ in range(12):
+  try:
+   adb('shell','rm','-f','/sdcard/window.xml')
+   adb('shell','uiautomator','dump','/sdcard/window.xml')
+   raw=adb('shell','cat','/sdcard/window.xml')
+   parsed=ET.fromstring(raw)
+   (out/'window.xml').write_bytes(raw)
+   return parsed
+  except (subprocess.CalledProcessError, ET.ParseError):
+   time.sleep(2)
+ (out/'startup-logcat.txt').write_bytes(adb('logcat','-d','-t','1500'))
+ (out/'startup-failure.png').write_bytes(adb('exec-out','screencap','-p'))
+ raise RuntimeError('Android UI did not become available')
+
 def tap_id(name):
  for _ in range(15):
   for n in dump().iter('node'):
@@ -22,6 +32,12 @@ def shot(name):
  dump()
 adb('shell','am','start','-n','com.nashmi233.downloader/com.deniscerri.ytdl.MainActivity')
 time.sleep(12)
+for _ in range(20):
+ if any(n.get('resource-id','').endswith(':id/search_bar') for n in dump().iter('node')): break
+ time.sleep(2)
+else:
+ (out/'startup-logcat.txt').write_bytes(adb('logcat','-d','-t','1500'))
+ raise RuntimeError('Home did not finish loading')
 shot('home')
 # Open the existing SearchBar overflow without invoking a menu action.
 for node in dump().iter('node'):
