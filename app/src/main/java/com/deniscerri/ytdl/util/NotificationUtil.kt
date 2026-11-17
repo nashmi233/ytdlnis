@@ -6,20 +6,16 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.FileProvider
-import androidx.documentfile.provider.DocumentFile
 import androidx.navigation.NavDeepLinkBuilder
 import com.deniscerri.ytdl.MainActivity
 import com.deniscerri.ytdl.R
@@ -29,7 +25,6 @@ import com.deniscerri.ytdl.receiver.CancelWorkReceiver
 import com.deniscerri.ytdl.receiver.PauseDownloadNotificationReceiver
 import com.deniscerri.ytdl.receiver.ResumeActivity
 import com.deniscerri.ytdl.util.Extensions.toBitmap
-import java.io.File
 import kotlin.random.Random
 
 

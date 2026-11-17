@@ -94,5 +94,6 @@ class DownloadPresentationTest {
         util.createNotificationChannel()
         util.updateDownloadNotification(12003, 37, "مقطع تجريبي", NotificationUtil.DOWNLOAD_SERVICE_CHANNEL_ID)
         posted(12003, "37%")
+        Unit
     }
 }
