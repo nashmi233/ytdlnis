@@ -96,7 +96,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/about" >
-        <Preference app:key="hammel_about" app:title="حمّل" app:summary="تنزيل الفيديو والصوت من الروابط ومشاركتها مباشرة إلى التطبيق." app:selectable="false" />
+        <Preference app:key="hammel_about" app:title="@string/app_name" app:summary="تنزيل الفيديو والصوت من الروابط ومشاركتها مباشرة إلى التطبيق." app:selectable="false" />
         <Preference app:key="hammel_developer" app:title="تطوير وتخصيص" app:summary="@string/hammel_developer" app:selectable="false" />
         <Preference app:key="hammel_version" app:title="الإصدار" app:selectable="false" />
         <Preference

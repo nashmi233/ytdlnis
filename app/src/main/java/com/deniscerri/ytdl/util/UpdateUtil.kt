@@ -128,7 +128,7 @@ class UpdateUtil(var context: Context) {
             try {
                 val releaseVersion = AppUpdatePolicy.selectAsset(
                     release, Build.SUPPORTED_ABIS.toList(), BuildConfig.FLAVOR, BuildConfig.DEBUG
-                ) ?: error("لا يوجد ملف تحديث متوافق مع نسخة حمّل المثبتة")
+                ) ?: error("لا يوجد ملف تحديث متوافق مع نسخة ناش المثبتة")
                 val incoming = AppUpdatePolicy.version(release.tag_name)
                 val current = AppUpdatePolicy.version(BuildConfig.VERSION_NAME)
                 require(incoming != null && current != null && incoming > current) {
@@ -197,7 +197,7 @@ class UpdateUtil(var context: Context) {
             installed.packageName, PackageInfoCompat.getLongVersionCode(installed),
             installed.versionName.orEmpty(), archive.packageName,
             PackageInfoCompat.getLongVersionCode(archive), archive.versionName.orEmpty(), advertisedTag
-        )) { "ملف التحديث لا يخص حمّل أو ليس إصدارًا أحدث من المثبت" }
+        )) { "ملف التحديث لا يخص ناش أو ليس إصدارًا أحدث من المثبت" }
 
         val compatibleSignature = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val oldSigning = installed.signingInfo

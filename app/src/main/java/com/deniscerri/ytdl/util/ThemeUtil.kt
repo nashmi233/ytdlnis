@@ -150,7 +150,7 @@ object ThemeUtil {
         val foreground = TypedValue()
         context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, foreground, true)
         val hexColor = "#%06X".format(0xFFFFFF and foreground.data)
-        return "<span style='color:$hexColor'>حمّل</span>"
+        return "<span style='color:$hexColor'>${context.getString(R.string.app_name)}</span>"
             .parseAsHtml(HtmlCompat.FROM_HTML_MODE_COMPACT)
     }
 

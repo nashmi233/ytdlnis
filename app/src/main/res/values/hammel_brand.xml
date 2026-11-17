@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">حمّل</string>
+    <string name="app_name" translatable="false">ناش | NASH</string>
 
     <string name="hammel_auto_detect_clipboard_title" translatable="false">التعرّف على الرابط المنسوخ</string>
-    <string name="hammel_auto_detect_clipboard_summary" translatable="false">يفحص الرابط المنسوخ عند فتح حمّل أو الرجوع إليه.</string>
+    <string name="hammel_auto_detect_clipboard_summary" translatable="false">يفحص الرابط المنسوخ عند فتح ناش أو الرجوع إليه.</string>
     <string name="hammel_auto_download_copied_link_title" translatable="false">بدء التنزيل تلقائيًا</string>
     <string name="hammel_auto_download_copied_link_summary" translatable="false">ينزّل الرابط المنسوخ مباشرة عند تفعيل التعرّف عليه.</string>
     <string name="hammel_save_to_gallery_title" translatable="false">إظهار التنزيلات في الاستوديو</string>

@@ -125,9 +125,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_scrollFlags="scroll|enterAlways"
-            app:title="حمّل"
+            app:title="@string/app_name"
             app:logo="@drawable/hammel_toolbar_logo"
-            app:logoDescription="شعار حمّل" />
+            app:logoDescription="شعار التطبيق" />
 
         <TextView
             android:layout_width="match_parent"
@@ -135,7 +135,7 @@
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="8dp"
-            android:text="شارك رابط الفيديو إلى حمّل ليبدأ التنزيل تلقائيًا، أو الصق الرابط هنا"
+            android:text="شارك رابط الفيديو إلى ناش ليبدأ التنزيل تلقائيًا، أو الصق الرابط هنا"
             android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?android:attr/textColorSecondary"
             app:layout_scrollFlags="scroll|enterAlways" />
