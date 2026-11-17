@@ -424,33 +424,16 @@ object FileUtil {
     }
 
     fun shareFileIntent(context: Context, paths: List<String>){
-        val uris : ArrayList<Uri> = arrayListOf()
-        paths.runCatching {
-            this.forEach {path ->
-                val uri = DocumentFile.fromSingleUri(context, Uri.parse(path)).run{
-                    if (this?.exists() == true){
-                        this.uri
-                    }else if (File(path).exists()){
-                        FileProvider.getUriForFile(context, context.packageName + ".fileprovider", File(path))
-                    }else null
-                }
-                if (uri != null) uris.add(uri)
-            }
+        val shareIntent = MediaShareUtil.createIntent(context, paths)
+        if (shareIntent == null) {
+            Toast.makeText(context, R.string.hammel_share_unavailable, Toast.LENGTH_SHORT).show()
+            return
         }
-
-        if (uris.isEmpty()){
-            Toast.makeText(context, "Error sharing files!", Toast.LENGTH_SHORT).show()
-        }else{
-            Intent().apply {
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                action = Intent.ACTION_SEND_MULTIPLE
-                putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
-                type = if (uris.size == 1) uris[0].let { context.contentResolver.getType(it) } ?: "media/*" else "*/*"
-                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            }.run{
-                context.startActivity(Intent.createChooser(this, context.getString(R.string.share)))
-            }
+        runCatching {
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }.onFailure {
+            Toast.makeText(context, R.string.hammel_share_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
 

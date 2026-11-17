@@ -11,7 +11,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.BitmapFactory
-import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -45,7 +44,6 @@ class NotificationUtil(var context: Context) {
     private val notificationManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
     private val resources: Resources = context.resources
 
-    private val canPostPromotedNotifications = Build.VERSION.SDK_INT >= 36 && notificationManager.canPostPromotedNotifications()
 
     fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -161,7 +159,7 @@ class NotificationUtil(var context: Context) {
         val notificationBuilder = getBuilder(DOWNLOAD_SERVICE_CHANNEL_ID)
 
         return notificationBuilder
-            .setContentTitle(title)
+            .setContentTitle(DownloadNotificationText.title(title, resources.getString(R.string.app_name)))
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_PROGRESS)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -171,10 +169,13 @@ class NotificationUtil(var context: Context) {
                     android.R.drawable.stat_sys_download
                 )
             )
-            .setContentText("")
+            .setContentText("0%")
+            .setSubText(null)
+            .setStyle(null)
+            .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setProgress(PROGRESS_MAX, PROGRESS_CURR, true)
+            .setProgress(PROGRESS_MAX, PROGRESS_CURR, false)
             .setContentIntent(pendingIntent)
             .setGroup(group.toString())
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
@@ -255,20 +256,22 @@ class NotificationUtil(var context: Context) {
             else -> R.drawable.ic_launcher_foreground_large
         }
 
-        val contentText = StringBuilder("$title")
 
         val bitmap = iconType.toBitmap(context)
         notificationBuilder
-            .setContentTitle("${res.getString(R.string.downloaded)} $title")
+            .setContentTitle(DownloadNotificationText.title(title, res.getString(R.string.app_name)))
             .setSmallIcon(R.drawable.ic_launcher_foreground_large)
             .setLargeIcon(bitmap)
             .setGroup(DOWNLOAD_FINISHED_NOTIFICATION_ID.toString())
-            .setContentText(title)
+            .setContentText("100% · ${res.getString(R.string.downloaded).trim().trimEnd(':')}")
+            .setSubText(null)
+            .setStyle(null)
+            .setOngoing(false)
+            .setProgress(0, 0, false)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .clearActions()
         if (filepath != null){
-            contentText.append("\n\n"+ filepath.joinToString("\n"))
             try{
                 val uris = filepath.mapNotNull {
                     runCatching {
@@ -322,7 +325,6 @@ class NotificationUtil(var context: Context) {
                 notificationBuilder.addAction(0, res.getString(R.string.share), shareNotificationPendingIntent)
             }catch (_: Exception){}
         }
-        notificationBuilder.setStyle(NotificationCompat.BigTextStyle().bigText(contentText.toString().trimIndent()))
         notificationManager.notify(DOWNLOAD_FINISHED_NOTIFICATION_ID + id.toInt(), notificationBuilder.build())
 
         if (
@@ -387,8 +389,10 @@ class NotificationUtil(var context: Context) {
         )
 
         notificationBuilder
-            .setContentTitle("${res.getString(R.string.failed_download)}: $title")
-            .setContentText(error)
+            .setContentTitle(DownloadNotificationText.title(title, res.getString(R.string.app_name)))
+            .setContentText(res.getString(R.string.failed_download))
+            .setSubText(null)
+            .setStyle(null)
             .setSmallIcon(R.drawable.baseline_error_24)
             .setLargeIcon(
                 BitmapFactory.decodeResource(
@@ -438,20 +442,11 @@ class NotificationUtil(var context: Context) {
     @SuppressLint("MissingPermission")
     fun updateDownloadNotification(
         id: Int,
-        desc: String,
         progressRaw: Int,
-        queue: Int,
         title: String?,
         channel : String
     ) {
-        var progress = 0
-        if (progressRaw >= 0) {
-            progress = progressRaw
-        }
-
-        var contentText = ""
-        if (queue > 1) contentText += """${queue - 1} ${resources.getString(R.string.items_left)}""" + "\n"
-        contentText += desc.replace("\\[.*?\\] ".toRegex(), "")
+        val progress = DownloadNotificationText.inProgressPercent(progressRaw)
 
         val pauseIntent = Intent(context, PauseDownloadNotificationReceiver::class.java)
         pauseIntent.putExtra("itemID", id)
@@ -473,57 +468,22 @@ class NotificationUtil(var context: Context) {
         )
 
         try {
-            if (canPostPromotedNotifications) {
-                val progressStyle = Notification.ProgressStyle()
-                    .setProgressPoints(listOf(
-                        Notification.ProgressStyle.Point(PROGRESS_CURR),
-                        Notification.ProgressStyle.Point(PROGRESS_MAX)
-                    ))
-                    .setProgressTrackerIcon(Icon.createWithResource(context, R.drawable.exomedia_ic_play_arrow_white))
-                    .setProgress(progress)
-                    .setProgressIndeterminate(progress == 0 || progress == 100)
-
-                val pauseAction = Notification.Action.Builder(
-                    Icon.createWithResource(context, android.R.drawable.ic_media_pause),
-                    context.getString(R.string.pause),
-                    pauseNotificationPendingIntent
-                ).build()
-
-                val cancelAction = Notification.Action.Builder(
-                    Icon.createWithResource(context, android.R.drawable.ic_menu_close_clear_cancel),
-                    context.getString(R.string.cancel),
-                    cancelNotificationPendingIntent
-                ).build()
-
-                val builder = Notification.Builder(context, channel)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground_large)
-                    .setContentTitle("$progress%")
-                    .setContentText(title)
-                    .setSubText(contentText)
-                    .setStyle(progressStyle)
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setCategory(Notification.CATEGORY_PROGRESS)
-                    //.setRequestPromotedOngoing(true)
-                    .addExtras(Bundle().apply {
-                        // This is the manual flag for "Request Promoted Ongoing"
-                        putBoolean("android.requestPromotedOngoing", true)
-                    })
-                    .addAction(pauseAction)
-                    .addAction(cancelAction)
-
-                notificationManager.notify(id, builder.build())
-            } else {
-                val notificationBuilder = getBuilder(channel)
-                notificationBuilder.setProgress(100, progress, (progress == 0 || progress == 100))
-                    .setContentTitle(title)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
-                    .setGroup(DOWNLOAD_RUNNING_NOTIFICATION_ID.toString())
-                    .clearActions()
-                    .addAction(0, resources.getString(R.string.pause), pauseNotificationPendingIntent)
-                    .addAction(0, resources.getString(R.string.cancel), cancelNotificationPendingIntent)
-                notificationManager.notify(id, notificationBuilder.build())
-            }
+            val notificationBuilder = getBuilder(channel)
+            notificationBuilder
+                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setProgress(PROGRESS_MAX, progress, false)
+                .setContentTitle(DownloadNotificationText.title(title, resources.getString(R.string.app_name)))
+                .setContentText("$progress%")
+                .setSubText(null)
+                .setStyle(null)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setCategory(Notification.CATEGORY_PROGRESS)
+                .setGroup(DOWNLOAD_RUNNING_NOTIFICATION_ID.toString())
+                .clearActions()
+                .addAction(0, resources.getString(R.string.pause), pauseNotificationPendingIntent)
+                .addAction(0, resources.getString(R.string.cancel), cancelNotificationPendingIntent)
+            notificationManager.notify(id, notificationBuilder.build())
         } catch (e: Exception) {
             e.printStackTrace()
         }

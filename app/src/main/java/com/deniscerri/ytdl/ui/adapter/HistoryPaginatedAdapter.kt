@@ -20,15 +20,13 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.deniscerri.ytdl.R
-import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.HistoryItem
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.io.File
+import com.deniscerri.ytdl.util.MediaShareUtil
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -64,8 +62,8 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryPaginatedAdapter.ViewHolder {
         val layoutRes = when (viewType) {
             TYPE_STANDARD_MULTIPLE -> R.layout.history_card_multiple
-            TYPE_DOWNLOAD_CARD_SINGLE -> R.layout.download_card
-            TYPE_DOWNLOAD_CARD_MULTIPLE -> R.layout.download_card_multiple
+            TYPE_DOWNLOAD_CARD_SINGLE -> R.layout.history_download_card
+            TYPE_DOWNLOAD_CARD_MULTIPLE -> R.layout.history_download_card_multiple
             else -> R.layout.history_card
         }
 
@@ -135,11 +133,11 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
             datetime.text = SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault()).format(item.time * 1000L)
 
             // BUTTON ----------------------------------
-            val btn = card.findViewById<FloatingActionButton>(R.id.downloads_download_button_type)
+            val btn = card.findViewById<MaterialButton>(R.id.downloads_download_button_type)
             var filesPresent = true
 
             //IS IN THE FILE SYSTEM?
-            if (item.downloadPath.all { !File(it).exists() && it.isNotBlank()}) {
+            if (item.downloadPath.none { MediaShareUtil.isAvailable(activity, it) }) {
                 filesPresent = false
                 thumbnail.colorFilter = ColorMatrixColorFilter(object : ColorMatrix() {
                     init {
@@ -154,15 +152,10 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorPrimaryContainer, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
             }
 
-            if (item.type == DownloadType.audio) {
-                if (filesPresent) btn.setImageResource(R.drawable.ic_music_downloaded) else {
-                    btn.setImageResource(R.drawable.ic_music)
-                }
-            } else if (item.type == DownloadType.video) {
-                if (filesPresent) btn.setImageResource(R.drawable.ic_video_downloaded) else btn.setImageResource(R.drawable.ic_video)
-            }else{
-                if (filesPresent) btn.setImageResource(R.drawable.ic_terminal) else btn.setImageResource(R.drawable.baseline_code_off_24)
-            }
+            btn.setIconResource(R.drawable.baseline_share_24)
+            btn.text = activity.getString(R.string.share)
+            btn.contentDescription = activity.getString(R.string.share) + " " + item.title
+            btn.isEnabled = filesPresent
             if (btn.hasOnClickListeners()) btn.setOnClickListener(null)
             btn.isClickable = filesPresent
 
@@ -225,7 +218,7 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
             var filesPresent = true
 
             //IS IN THE FILE SYSTEM?
-            if (item.downloadPath.all { !File(it).exists() && it.isNotBlank()}) {
+            if (item.downloadPath.none { MediaShareUtil.isAvailable(activity, it) }) {
                 filesPresent = false
                 thumbnail.colorFilter = ColorMatrixColorFilter(object : ColorMatrix() {
                     init {
@@ -240,15 +233,10 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorPrimaryContainer, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
             }
 
-            if (item.type == DownloadType.audio) {
-                if (filesPresent) btn.setIconResource(R.drawable.ic_music_downloaded) else {
-                    btn.setIconResource(R.drawable.ic_music)
-                }
-            } else if (item.type == DownloadType.video) {
-                if (filesPresent) btn.setIconResource(R.drawable.ic_video_downloaded) else btn.setIconResource(R.drawable.ic_video)
-            }else{
-                if (filesPresent) btn.setIconResource(R.drawable.ic_terminal) else btn.setIconResource(R.drawable.baseline_code_off_24)
-            }
+            btn.setIconResource(R.drawable.baseline_share_24)
+            btn.text = activity.getString(R.string.share)
+            btn.contentDescription = activity.getString(R.string.share) + " " + item.title
+            btn.isEnabled = filesPresent
             if (btn.hasOnClickListeners()) btn.setOnClickListener(null)
             btn.isClickable = filesPresent
 
