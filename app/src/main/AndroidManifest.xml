@@ -57,6 +57,10 @@
             tools:targetApi="29" />
 
         <activity
+            android:name=".AppUpdateActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
+        <activity
             android:name=".MainActivity"
             android:configChanges="locale"
             android:exported="true"

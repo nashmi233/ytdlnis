@@ -103,7 +103,7 @@ jobs:
             printf '%s' '<map><boolean name="asked_auto_update_preferences" value="true"/><boolean name="update_app" value="false"/><boolean name="auto_update_ytdlp" value="false"/></map>' | adb shell run-as com.nashmi233.downloader sh -c '"cat > shared_prefs/com.nashmi233.downloader_preferences.xml"'
             python3 scripts/capture-screenshots.py
             adb install -g app/build/outputs/apk/androidTest/github/debug/*.apk
-            adb shell am instrument -w -e class com.deniscerri.ytdl.DownloadPresentationTest,com.deniscerri.ytdl.ExampleInstrumentedTest com.nashmi233.downloader.test/androidx.test.runner.AndroidJUnitRunner | tee screenshots/instrumentation.txt
+            adb shell am instrument -w -e class com.deniscerri.ytdl.DownloadPresentationTest,com.deniscerri.ytdl.AppUpdateFlowTest,com.deniscerri.ytdl.ExampleInstrumentedTest com.nashmi233.downloader.test/androidx.test.runner.AndroidJUnitRunner | tee screenshots/instrumentation.txt
             grep -q 'OK (' screenshots/instrumentation.txt
             adb shell am instrument -w -e class com.deniscerri.ytdl.DownloadPresentationTest#seedScreenshotFixture com.nashmi233.downloader.test/androidx.test.runner.AndroidJUnitRunner | tee screenshots/fixture.txt
             grep -q 'OK (' screenshots/fixture.txt

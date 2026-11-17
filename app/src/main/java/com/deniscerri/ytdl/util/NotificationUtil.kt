@@ -17,6 +17,7 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.NavDeepLinkBuilder
+import com.deniscerri.ytdl.AppUpdateActivity
 import com.deniscerri.ytdl.MainActivity
 import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.enums.DownloadType
@@ -750,27 +751,26 @@ class NotificationUtil(var context: Context) {
 
     @SuppressLint("MissingPermission")
     fun showNewAppUpdate(version: String) {
-        val notificationBuilder = getBuilder(DOWNLOAD_MISC_CHANNEL_ID)
+        // Do not leak update text/actions into package notifications sharing this channel.
+        val notificationBuilder = NotificationCompat.Builder(context, DOWNLOAD_MISC_CHANNEL_ID)
 
-        val intent = NavDeepLinkBuilder(context)
-            .setGraph(R.navigation.nav_graph)
-            .setDestination(R.id.homeFragment)
-            .createPendingIntent()
+        val intent = PendingIntent.getActivity(
+            context, NEW_APP_UPDATE_NOTIFICATION_ID,
+            Intent(context, AppUpdateActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         notificationBuilder
             .setContentTitle(resources.getString(R.string.version_ready_to_download, version))
+            .setContentText(resources.getString(R.string.nash_tap_to_update))
             .setSmallIcon(R.drawable.ic_launcher_foreground_large)
-            .setLargeIcon(
-                BitmapFactory.decodeResource(
-                    resources,
-                    R.drawable.ic_launcher_foreground_large
-                )
-            )
             .setContentIntent(intent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOnlyAlertOnce(true)
+            .setAutoCancel(true)
             .clearActions()
+            .addAction(R.drawable.ic_update_app, resources.getString(R.string.update), intent)
 
         notificationManager.notify(NEW_APP_UPDATE_NOTIFICATION_ID, notificationBuilder.build())
     }

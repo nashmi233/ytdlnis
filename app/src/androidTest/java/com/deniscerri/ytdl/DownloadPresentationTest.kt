@@ -57,6 +57,30 @@ class DownloadPresentationTest {
         context.getSystemService(NotificationManager::class.java).cancelAll()
     }
 
+    @Test fun updateNotificationOpensPrivateDownloadScreenDirectly() {
+        val util = NotificationUtil(context)
+        util.createNotificationChannel()
+        util.showNewAppUpdate("nash-1.8.9.8")
+        val notification = posted(NotificationUtil.NEW_APP_UPDATE_NOTIFICATION_ID, context.getString(R.string.nash_tap_to_update))
+        assertNotNull(notification.contentIntent)
+        assertEquals(notification.contentIntent, notification.actions.single().actionIntent)
+        assertTrue(notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
+        val component = android.content.ComponentName(context, AppUpdateActivity::class.java)
+        @Suppress("DEPRECATION")
+        val activity = context.packageManager.getActivityInfo(component, 0)
+        assertFalse(activity.exported)
+        assertEquals("ناش | NASH", context.getString(R.string.app_name))
+        // FLAG_NO_CREATE only finds a matching existing token; it cannot create a false match.
+        val expected = android.app.PendingIntent.getActivity(
+            context, NotificationUtil.NEW_APP_UPDATE_NOTIFICATION_ID,
+            Intent(context, AppUpdateActivity::class.java),
+            android.app.PendingIntent.FLAG_NO_CREATE or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        assertNotNull(expected)
+        assertEquals(expected, notification.contentIntent)
+        util.cancelAppUpdate()
+    }
+
     @Test fun singleVideoSharesReadableContentUriAndMultipleVideosStayMultiple() {
         val first = File(context.cacheDir, "share-first.mp4").apply { writeText("test media bytes") }
         val second = File(context.cacheDir, "share-second.mp4").apply { writeText("second media bytes") }

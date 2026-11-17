@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nash_tap_to_update">Tap to download the update</string>
+    <string name="nash_checking_update">Checking for an update…</string>
+    <string name="nash_downloading_update">Downloading update: %1$d%%</string>
+    <string name="nash_update_ready">Update downloaded. Confirm installation to finish.</string>
+    <string name="nash_allow_install">Allow installs from this app to continue.</string>
+    <string name="nash_update_failed">Could not download or verify the update. Please try again.</string>
+    <string name="nash_update_install_failed">Could not open the installer. Please try again.</string>
+    <string name="nash_install_update">Install update</string>
+    <string name="nash_retry_update">Try again</string>
+</resources>
