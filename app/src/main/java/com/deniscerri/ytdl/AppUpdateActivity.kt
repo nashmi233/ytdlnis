@@ -16,6 +16,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.deniscerri.ytdl.database.models.GithubRelease
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ThemeUtil
 import com.deniscerri.ytdl.util.UpdateUtil
@@ -63,6 +64,7 @@ class AppUpdateActivity : AppCompatActivity() {
                 AppUpdateViewModel.Phase.DOWNLOADING -> getString(R.string.nash_downloading_update, state.percent)
                 AppUpdateViewModel.Phase.READY -> getString(R.string.nash_update_ready)
                 AppUpdateViewModel.Phase.ERROR -> getString(R.string.nash_update_failed)
+                AppUpdateViewModel.Phase.CURRENT -> getString(R.string.you_are_in_latest_version)
             }
             if (state.phase == AppUpdateViewModel.Phase.READY && !installationOffered) {
                 installationOffered = true
@@ -97,8 +99,20 @@ class AppUpdateActivity : AppCompatActivity() {
 }
 
 /** Retains one download across rotation; leaving the screen cancels its job. */
-class AppUpdateViewModel(application: Application) : AndroidViewModel(application) {
-    enum class Phase { CHECKING, DOWNLOADING, READY, ERROR }
+internal interface AppUpdateSource {
+    suspend fun findRelease(): Result<GithubRelease>
+    suspend fun download(release: GithubRelease, progress: (Long) -> Unit): Result<File>
+}
+
+private class GithubAppUpdateSource(application: Application) : AppUpdateSource {
+    private val updater = UpdateUtil(application)
+    override suspend fun findRelease() = withContext(Dispatchers.IO) { updater.tryGetNewVersion() }
+    override suspend fun download(release: GithubRelease, progress: (Long) -> Unit) = updater.downloadReleaseApk(release, progress)
+}
+
+class AppUpdateViewModel internal constructor(application: Application, private val source: AppUpdateSource) : AndroidViewModel(application) {
+    constructor(application: Application) : this(application, GithubAppUpdateSource(application))
+    enum class Phase { CHECKING, DOWNLOADING, READY, ERROR, CURRENT }
     data class State(val phase: Phase, val percent: Int = 0, val file: File? = null)
     val state = MutableLiveData(State(Phase.CHECKING))
     private var job: Job? = null
@@ -107,28 +121,27 @@ class AppUpdateViewModel(application: Application) : AndroidViewModel(applicatio
         if (job?.isActive == true || state.value?.phase == Phase.READY) return
         job = viewModelScope.launch {
             state.value = State(Phase.CHECKING)
-            val updater = UpdateUtil(getApplication())
             // Fetch trusted release metadata again; never accept an APK URL from an intent.
-            val release = withContext(Dispatchers.IO) { updater.tryGetNewVersion() }.getOrNull()
+            val check = source.findRelease()
+            val release = check.getOrNull()
             if (release == null) {
-                state.value = State(Phase.ERROR)
+                val current = check.exceptionOrNull()?.message == getApplication<Application>().getString(R.string.you_are_in_latest_version)
+                state.value = State(if (current) Phase.CURRENT else Phase.ERROR)
                 return@launch
             }
             state.value = State(Phase.DOWNLOADING)
-            val result = updater.downloadReleaseApk(release) { percent ->
-                viewModelScope.launch(Dispatchers.Main) {
+            val result = source.download(release) { percent ->
+                viewModelScope.launch(Dispatchers.Main.immediate) {
                     if (state.value?.phase == Phase.DOWNLOADING) {
                         state.value = State(Phase.DOWNLOADING, percent.toInt())
                     }
                 }
             }
             // Late progress is ignored once a terminal state has been published.
-            withContext(Dispatchers.Main) {
-                result.fold(
-                    onSuccess = { state.value = State(Phase.READY, 100, it) },
-                    onFailure = { state.value = State(Phase.ERROR) }
-                )
-            }
+            result.fold(
+                onSuccess = { state.value = State(Phase.READY, 100, it) },
+                onFailure = { state.value = State(Phase.ERROR) }
+            )
         }
     }
 }
