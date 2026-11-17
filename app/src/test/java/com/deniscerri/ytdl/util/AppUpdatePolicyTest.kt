@@ -27,6 +27,18 @@ class AppUpdatePolicyTest {
         assertEquals(0, AppUpdatePolicy.version("v1.8.9")!!.compareTo(AppUpdatePolicy.version("1.8.9.0")!!))
     }
     @Test fun hammelTagsAreSupported() { assertNotNull(select(release("hammel-1.8.9.3"))) }
+    @Test fun nashReleaseAndAssetNamesAreSupported() {
+        val r = release("nash-1.8.9.8")
+        r.assets = r.assets.map { it.copy(name = "NASH-1.8.9.8-arm64-v8a-debug.apk") }
+        assertNotNull(select(r))
+        assertTrue(installable(version = "1.8.9.8", tag = "nash-1.8.9.8", code = 108090800))
+    }
+    @Test fun renamedTagCannotOfferInstalledVersionAgain() {
+        assertNull(select(release("nash-1.8.9.2")))
+    }
+    @Test fun nashPreviewStillRequiresOptIn() {
+        assertNull(select(release("nash-1.8.9.8-test.1")))
+    }
     @Test fun malformedTagsDoNotBreakValidUpdates() {
         assertNotNull(select(release("nightly"), release("999999999999999999999.1.0"), release()))
         assertNull(AppUpdatePolicy.version("1.100.0"))

@@ -2776,8 +2776,6 @@ object UiUtil {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun showNewAppUpdateDialog(v: GithubRelease, context: Activity, updateUtil: UpdateUtil, lifecycleOwner: LifecycleOwner, preferences: SharedPreferences) {
         if (context.isFinishing || context.isDestroyed) return
-        var positiveButton: Button? = null
-        var tmpDownloadJob: Job? = null
 
         val skippedVersions = preferences.getString("skip_updates", "")?.split(",")?.distinct()?.toMutableList() ?: mutableListOf()
 
@@ -2787,14 +2785,11 @@ object UiUtil {
             .setCancelable(false)
             .setIcon(R.drawable.ic_update_app)
             .setNeutralButton(R.string.ignore){ d: DialogInterface?, _:Int ->
-                tmpDownloadJob?.cancel()
                 skippedVersions.add(v.tag_name)
                 preferences.edit().putString("skip_updates", skippedVersions.joinToString(",")).apply()
                 d?.dismiss()
             }
-            .setNegativeButton(R.string.cancel) { _: DialogInterface?, _: Int ->
-                tmpDownloadJob?.cancel()
-            }
+            .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.update, null)
         val view = updateDialog.show()
         val textView = view.findViewById<TextView>(android.R.id.message)
@@ -2810,60 +2805,10 @@ object UiUtil {
         }).build()
         mw.setMarkdown(textView, v.body)
 
-        positiveButton = view.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+        val positiveButton = view.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
         positiveButton?.setOnClickListener {
-            positiveButton.isEnabled = false
-            positiveButton.text = "0%"
-
-            val lifecycleScope = lifecycleOwner.lifecycleScope
-
-            tmpDownloadJob = lifecycleScope.launch {
-                val fileResp = updateUtil.downloadReleaseApk(v) { progress ->
-                    lifecycleScope.launch {
-                        withContext(Dispatchers.Main) {
-                            positiveButton.text = "$progress%"
-                        }
-                    }
-                }
-
-                fileResp.onFailure {
-                    lifecycleScope.launch {
-                        withContext(Dispatchers.Main) {
-                            view.dismiss()
-                            Snackbar.make(
-                                context.findViewById(R.id.frame_layout),
-                                it.message ?: context.getString(R.string.errored),
-                                Snackbar.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-
-                fileResp.onSuccess { file ->
-                    lifecycleScope.launch {
-                        withContext(Dispatchers.Main) {
-                            val canRequestPackageInstalls = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                android.Manifest.permission.REQUEST_INSTALL_PACKAGES.hasPermission(context)
-                            } else {
-                                true
-                            }
-
-                            if (canRequestPackageInstalls) {
-                                val contentUri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(contentUri, "application/vnd.android.package-archive")
-                                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                }
-                                context.startActivity(intent)
-                            } else {
-                                Snackbar.make(context.findViewById(R.id.frame_layout), context.getString(R.string.install_downloaded_file), Snackbar.LENGTH_LONG).show()
-                            }
-
-                            view.dismiss()
-                        }
-                    }
-                }
-            }
+            view.dismiss()
+            context.startActivity(Intent(context, com.deniscerri.ytdl.AppUpdateActivity::class.java))
         }
     }
 

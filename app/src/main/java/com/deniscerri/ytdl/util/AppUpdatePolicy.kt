@@ -9,7 +9,7 @@ internal object AppUpdatePolicy {
     const val RELEASES_API = "https://api.github.com/repos/$REPOSITORY/releases"
     private const val RELEASES_URL = "https://github.com/$REPOSITORY/releases"
     private val versionPattern = Regex(
-        "^(?:hammel-|v)?(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([A-Za-z][A-Za-z0-9.-]*))?$",
+        "^(?:nash-|hammel-|v)?(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([A-Za-z][A-Za-z0-9.-]*))?$",
         RegexOption.IGNORE_CASE
     )
 
@@ -46,7 +46,7 @@ internal object AppUpdatePolicy {
         val buildType = if (debug) "debug" else "release"
         val compatible = release.assets.filter { asset ->
             val name = asset.name
-            (name.startsWith("NashmiDownloader-") || name.startsWith("Hammel-", true)) &&
+            (name.startsWith("NashmiDownloader-") || name.startsWith("Hammel-", true) || name.startsWith("NASH-", true)) &&
                 asset.browser_download_url.startsWith("$RELEASES_URL/download/${release.tag_name}/") &&
                 name.endsWith("-$buildType.apk") &&
                 (name.contains("-foss-") == (flavor != "github"))

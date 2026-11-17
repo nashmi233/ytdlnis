@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nash_tap_to_update">اضغط لتنزيل التحديث مباشرة</string>
+    <string name="nash_checking_update">جارٍ التحقق من التحديث…</string>
+    <string name="nash_downloading_update">تنزيل التحديث: %1$d%%</string>
+    <string name="nash_update_ready">اكتمل تنزيل التحديث. أكّد التثبيت لإتمامه.</string>
+    <string name="nash_allow_install">اسمح بالتثبيت من هذا التطبيق للمتابعة.</string>
+    <string name="nash_update_failed">تعذّر تنزيل التحديث أو التحقق منه. حاول مرة أخرى.</string>
+    <string name="nash_update_install_failed">تعذّر فتح شاشة التثبيت. حاول مرة أخرى.</string>
+    <string name="nash_install_update">تثبيت التحديث</string>
+    <string name="nash_retry_update">إعادة المحاولة</string>
+</resources>
