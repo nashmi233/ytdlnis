@@ -1,0 +1,85 @@
+name: Publish tested Hammel 1.8.9.6
+
+on:
+  push:
+    branches: [custom-app]
+    paths: [.github/workflows/publish-hammel-1.8.9.6.yml]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: publish-hammel-1.8.9.6
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: nashmi233/ytdlnis
+      TAG: hammel-1.8.9.6-test.1
+      RELEASE_COMMIT: 6fe608c7c169ee7b7357c0eed9c2dfceb22f307f
+      TESTED_COMMIT: fddf18faed2c025f67729eab5c186159e8a472af
+      TESTED_RUN: '43954871565'
+      UI_RUN: '43957232947'
+      UI_COMMIT: c0782d55a253772851bc097d2030559b465ddc0c
+      APK: release-assets/NashmiDownloader-1.8.9.6-universal-debug.apk
+    steps:
+      - name: Verify tested source and download the exact APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/actions/runs/$TESTED_RUN" --jq '.status + ":" + .head_sha')" = "completed:$TESTED_COMMIT"
+          test "$(gh api "repos/$GH_REPO/actions/runs/$UI_RUN" --jq '.status + ":" + .conclusion + ":" + .head_sha')" = "completed:success:$UI_COMMIT"
+          gh api "repos/$GH_REPO/actions/runs/$TESTED_RUN/jobs" > build-jobs.json
+          python3 - <<'PYBUILD'
+          import json
+          jobs = json.load(open('build-jobs.json'))['jobs']
+          build = next(j for j in jobs if j['name'] == 'build')
+          steps = {s['name']: s['conclusion'] for s in build['steps']}
+          assert steps['Run unit tests'] == 'success'
+          assert steps['Build Hammel test APK'] == 'success'
+          assert steps['Upload universal APK'] == 'success'
+          PYBUILD
+          gh api "repos/$GH_REPO/compare/$TESTED_COMMIT...$RELEASE_COMMIT" > comparison.json
+          python3 - <<'PYCODE'
+          import json, re
+          comparison = json.load(open('comparison.json'))
+          assert comparison['status'] in ('ahead', 'identical')
+          allowed = r'(README[^/]*\.md|CHANGELOG\.md|CONTRIBUTING\.MD|SECURITY\.md|PRIVACY\.md|docs/(screenshots/[^/]+\.png|VALIDATION-1\.8\.9\.6\.md)|fastlane/metadata/android/en-US/(title|short_description|full_description)\.txt)'
+          assert all(re.fullmatch(allowed, f['filename']) for f in comparison.get('files', [])), 'Application source changed after testing'
+          PYCODE
+          gh run download "$TESTED_RUN" --name Hammel-universal-test-APK --dir release-assets
+          echo "969ef74559dcf7635133336018f2f1d30223953f7930dede588ca4a5ea57e2a8  $APK" | sha256sum --check
+      - name: Publish the tested APK as a prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release already exists; refusing to overwrite it."
+            exit 1
+          fi
+          cat > release-notes.md <<'NOTES'
+          ## حمّل 1.8.9.6
+          - إبقاء خلفية الصفحة سوداء مع خانة رابط وشريط سفلي وقوائم رمادية واضحة.
+          - إبراز خيارات «المزيد» داخل بطاقات ذات حدود ومسافات واضحة.
+          - تحسين وضوح النصوص والأيقونات، وإظهار اسم حمّل بلون فاتح.
+          - تحديث صور المستودع بلقطات فعلية للرئيسية والقائمة والإعدادات.
+
+          **التحقق:** 43 اختبارًا ناجحًا، وبناء APK ناجح. فحص Android Lint ما زال يسجل 30 خطأ مطابقة للنسخة السابقة، دون أخطاء جديدة؛ لم يُعتبر الفحص نظيفًا. فُحصت الواجهة على محاكي أندرويد، بما يشمل حفظ إعداد التنزيل بعد إعادة تشغيل التطبيق.
+          هذا هو نفس الملف الذي اجتاز فحص الواجهة، ولم يُعد بناؤه عند النشر.
+
+          **نسخة تجريبية (Debug).** توقيع هذه النسخة يختلف عن 1.8.9.5، لذلك لن يقبل أندرويد تثبيتها فوقها كتحديث مباشر. احفظ نسخة احتياطية من بياناتك قبل أي تغيير للتثبيت. لم يُختبر التثبيت على جهاز المستخدم؛ إذا رفض أندرويد التحديث فلا تحذف النسخة القديمة حفاظًا على بياناتك.
+
+          SHA-256:
+          `969ef74559dcf7635133336018f2f1d30223953f7930dede588ca4a5ea57e2a8`
+
+          [سجل الاختبارات والبناء](https://github.com/nashmi233/ytdlnis/actions/runs/43954871565) — تعثر تنزيل المحاكي في هذا التشغيل، وأعيد فحص نفس APK في [تشغيل مستقل](https://github.com/nashmi233/ytdlnis/actions/runs/43957232947).
+          NOTES
+          gh release create "$TAG" "$APK" --target "$RELEASE_COMMIT" --title "حمّل 1.8.9.6 — خانات وقوائم أوضح فوق الخلفية السوداء" --notes-file release-notes.md --draft --prerelease
+          gh release edit "$TAG" --draft=false --prerelease
+          gh release view "$TAG" --json url,assets,isPrerelease

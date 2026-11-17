@@ -294,7 +294,7 @@ class DownloadWorker(
                                 val title: String = downloadItem.title.ifEmpty { downloadItem.url }
                                 notificationUtil.updateDownloadNotification(
                                     downloadItem.id.toInt(),
-                                    line, progress.toInt(), 0, title,
+                                    progress.toInt(), title,
                                     NotificationUtil.Companion.DOWNLOAD_SERVICE_CHANNEL_ID
                                 )
                                 CoroutineScope(Dispatchers.IO).launch {

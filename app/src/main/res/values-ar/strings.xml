@@ -608,4 +608,5 @@
         <item quantity="many">كل %d دقيقة</item>
         <item quantity="other">كل %d دقيقة</item>
     </plurals>
+    <string name="hammel_share_unavailable">الملف غير موجود أو تعذّرت مشاركته.</string>
 </resources>
