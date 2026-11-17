@@ -751,7 +751,8 @@ class NotificationUtil(var context: Context) {
 
     @SuppressLint("MissingPermission")
     fun showNewAppUpdate(version: String) {
-        val notificationBuilder = getBuilder(DOWNLOAD_MISC_CHANNEL_ID)
+        // Do not leak update text/actions into package notifications sharing this channel.
+        val notificationBuilder = NotificationCompat.Builder(context, DOWNLOAD_MISC_CHANNEL_ID)
 
         val intent = PendingIntent.getActivity(
             context, NEW_APP_UPDATE_NOTIFICATION_ID,
