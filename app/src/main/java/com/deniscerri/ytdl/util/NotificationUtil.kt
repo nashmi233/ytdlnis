@@ -271,59 +271,25 @@ class NotificationUtil(var context: Context) {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .clearActions()
-        if (filepath != null){
-            try{
-                val uris = filepath.mapNotNull {
-                    runCatching {
-                        DocumentFile.fromSingleUri(context, Uri.parse(it)).run{
-                            if (this?.exists() == true){
-                                this.uri
-                            }else if (File(it).exists()){
-                                FileProvider.getUriForFile(context, context.packageName + ".fileprovider",
-                                    File(it))
-                            }else null
-                        }
-                    }.getOrNull()
-                }
-
-                val openFileIntent = Intent()
-                val shareFileIntent = Intent()
-
-                if (uris.isNotEmpty()){
-                    openFileIntent.apply {
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        action = Intent.ACTION_VIEW
-                        data = uris.first()
+        if (filepath != null) {
+            runCatching {
+                val shareIntent = MediaShareUtil.createIntent(context, filepath)
+                if (shareIntent != null) {
+                    val uri = requireNotNull(shareIntent.clipData).getItemAt(0).uri
+                    val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, context.contentResolver.getType(uri) ?: shareIntent.type)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        clipData = android.content.ClipData.newRawUri("media", uri)
                     }
-
-                    shareFileIntent.apply {
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        action = Intent.ACTION_SEND_MULTIPLE
-                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-                        type = if (uris.size == 1) uris[0].let { context.contentResolver.getType(it) } ?: "media/*" else "*/*"
-                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                    }
-                }
-
-                val openNotificationPendingIntent: PendingIntent = TaskStackBuilder.create(context).run {
-                    addNextIntentWithParentStack(openFileIntent)
-                    getPendingIntent(id.toInt(),
+                    val openPending = PendingIntent.getActivity(context, id.toInt(), openIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                    val sharePending = PendingIntent.getActivity(context, id.toInt(),
+                        Intent.createChooser(shareIntent, res.getString(R.string.share)),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                    notificationBuilder.addAction(0, res.getString(R.string.Open_File), openPending)
+                    notificationBuilder.addAction(0, res.getString(R.string.share), sharePending)
                 }
-
-                //share intent
-                val shareNotificationPendingIntent: PendingIntent = PendingIntent.getActivity(
-                    context,
-                    id.toInt(),
-                    Intent.createChooser(shareFileIntent, res.getString(R.string.share)),
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-
-                notificationBuilder.addAction(0, res.getString(R.string.Open_File), openNotificationPendingIntent)
-                notificationBuilder.addAction(0, res.getString(R.string.share), shareNotificationPendingIntent)
-            }catch (_: Exception){}
+            }
         }
         notificationManager.notify(DOWNLOAD_FINISHED_NOTIFICATION_ID + id.toInt(), notificationBuilder.build())
 
